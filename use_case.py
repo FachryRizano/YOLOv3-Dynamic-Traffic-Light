@@ -85,8 +85,11 @@ try:
 
     while(True):
         total_waktu_merah(waktu_ruas)
+        time_timur = waktu_ruas['timur'][0]
+        for i in range(time_timur,0):
+            tm.numbers(00, waktu_ruas['timur'][0])
+            waktu_ruas['timur']-=1
 
-        tm.numbers(00, waktu_ruas['timur'][0])
         tm_2.numbers(00, waktu_ruas['selatan'][1])
         tm_3.numbers(00, waktu_ruas['barat'][1])
         tm_4.numbers(00, waktu_ruas['utara'][1])
