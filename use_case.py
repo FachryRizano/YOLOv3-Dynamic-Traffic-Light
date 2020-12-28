@@ -70,9 +70,12 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 
 for arah in ruas.values():
-    GPIO.setup(arah[0],GPIO.OUT)
-    GPIO.setup(arah[1],GPIO.OUT)
-    GPIO.setup(arah[2],GPIO.OUT)
+    for i in range(3):
+        GPIO.setup(arah[i],GPIO.OUT)
+        GPIO.output(arah[i],False)
+    # GPIO.setup(arah[1],GPIO.OUT)
+    # GPIO.setup(arah[2],GPIO.OUT)
+
 
 tm = tm1637.TM1637(clk=ruas['timur'][0],dio=5)
 tm_2 = tm1637.TM1637(clk=ruas['selatan'][0],dio=6)
