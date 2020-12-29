@@ -21,7 +21,7 @@ ruas={
     'selatan':[21,20,16],
     'barat':[7,8,25],
     'utara':[18,15,14]
-    }
+}
 #index 0 = total waktu hijau
 #index 1 =total waktu merah
 
@@ -69,6 +69,7 @@ GPIO.setwarnings(False)
 
 GPIO.setmode(GPIO.BCM)
 
+#Setup semua lampu untuk diassign
 for arah in ruas.values():
     for i in range(3):
         GPIO.setup(arah[i],GPIO.OUT)
@@ -84,82 +85,43 @@ tm_4 = tm1637.TM1637(clk=ruas['utara'][0],dio=19)
 
 #initially turn 
 
+#fungsi mati nyalain lampu
+def light_on(arah,green=False,yellow=False,red=False):
+    if green:
+        GPIO.output(ruas[arah][0],True)
+        GPIO.output(ruas[arah][1],False)
+        GPIO.output(ruas[arah][2],False)
+    elif yellow:
+        GPIO.output(ruas[arah][0],False)
+        GPIO.output(ruas[arah][1],True)
+        GPIO.output(ruas[arah][2],False)
+    elif red:
+        GPIO.output(ruas[arah][0],False)
+        GPIO.output(ruas[arah][1],False)
+        GPIO.output(ruas[arah][2],True)
+
 try:
 
     while(True):
         total_waktu_merah(waktu_ruas)
-        time_timur = waktu_ruas['timur'][0]
-        for i in range(time_timur,0):
-            tm.numbers(00, waktu_ruas['timur'][0])
-            waktu_ruas['timur']-=1
 
+        tm.numbers(00, waktu_ruas['timur'][0])
         tm_2.numbers(00, waktu_ruas['selatan'][1])
         tm_3.numbers(00, waktu_ruas['barat'][1])
         tm_4.numbers(00, waktu_ruas['utara'][1])
-
-        GPIO.output(ruas['timur'][0],True)
-        GPIO.output(ruas['timur'][1],False)
-        GPIO.output(ruas['timur'][2],False)
-        
-        GPIO.output(ruas['selatan'][0],False)
-        GPIO.output(ruas['selatan'][1],False)
-        GPIO.output(ruas['selatan'][2],True)
-
-        GPIO.output(ruas['barat'][0],False)
-        GPIO.output(ruas['barat'][1],False)
-        GPIO.output(ruas['barat'][2],True)
-
-        GPIO.output(ruas['utara'][0],False)
-        GPIO.output(ruas['utara'][1],False)
-        GPIO.output(ruas['utara'][2],True)
-
-        # time.sleep(0.1)
-        # GPIO.output(ruas['timur'][0],False) 
-        # GPIO.output(ruas['timur'][0],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['timur'][0],False)
-        # GPIO.output(ruas['timur'][1],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['timur'][1],False)
-        # GPIO.output(ruas['timur'][2],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['timur'][2],False)
-        
-        # time.sleep(0.1)
+        #Timur Lampu Hijau nyala
+        light_on("timur",green=True)
+        #selatan lampu merah nyala
+        light_on("selatan",red=True)
         # GPIO.output(ruas['selatan'][0],False)
-        # GPIO.output(ruas['selatan'][0],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['selatan'][0],False)
-        # GPIO.output(ruas['selatan'][1],True)
-        # time.sleep(0.1)
         # GPIO.output(ruas['selatan'][1],False)
         # GPIO.output(ruas['selatan'][2],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['selatan'][2],False)
-        
-        # time.sleep(0.1)
+        light_on("barat",red=True)
         # GPIO.output(ruas['barat'][0],False)
-        # GPIO.output(ruas['barat'][0],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['barat'][0],False)
-        # GPIO.output(ruas['barat'][1],True)
-        # time.sleep(0.1)
         # GPIO.output(ruas['barat'][1],False)
         # GPIO.output(ruas['barat'][2],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['barat'][2],False)
+        light_on("utara",red=True)
         
-        # time.sleep(0.1)
-        # GPIO.output(ruas['utara'][0],False)
-        # GPIO.output(ruas['utara'][0],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['utara'][0],False)
-        # GPIO.output(ruas['utara'][1],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['utara'][1],False)
-        # GPIO.output(ruas['utara'][2],True)
-        # time.sleep(0.1)
-        # GPIO.output(ruas['utara'][2],False)
         
         
 
