@@ -17,7 +17,7 @@ class Traffic:
     def setArah(self,arah):
         self.__arah = arah
 
-    def setGreenTime(self,total_kendaraan):
+    def countGreenTime(self,total_kendaraan):
         threshold = 15
         waktu = total_kendaraan*2
         if waktu >= threshold:
