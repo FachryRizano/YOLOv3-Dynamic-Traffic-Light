@@ -7,127 +7,72 @@ import RPi.GPIO as GPIO
 import time
 import datetime
 import tm1637
-
+from Class.Class import Traffic
+import asyncio
 kendaraan_timur_pertama = 10
 kendaraan_selatan_pertama = 5
 kendaraan_barat_pertama = 8
 kendaraan_utara_pertama = 2
 
-#penghitungan total waktu
-# jumlah kendaraan * 2  = waktu lampu hijau
- # threshold waktu = 15
-ruas={
-    'timur':[22,27,17],
-    'selatan':[21,20,16],
-    'barat':[7,8,25],
-    'utara':[18,15,14]
-}
-#index 0 = total waktu hijau
-#index 1 =total waktu merah
+timur = Traffic("timur",5,[22,27,17])
+selatan = Traffic("selatan",6,[21,20,16]) 
+barat = Traffic("barat",13,[7,8,25])
+utara = Traffic("utara",19,[18,15,14])
 
+timur.setGreenTime(timur.countGreenTime(kendaraan_timur_pertama))
+selatan.setGreenTime(selatan.countGreenTime(kendaraan_selatan_pertama))
+barat.setGreenTime(selatan.countGreenTime(kendaraan_barat_pertama))
+utara.setGreenTime(utara.countGreenTime(kendaraan_utara_pertama))
 
-def total_waktu_hijau(ruas_jalan):
-    threshold = 15
-    waktu = ruas_jalan*2
-    if waktu >= threshold:
-        return threshold
-    else:
-        return waktu
-
-waktu_hijau_timur = total_waktu_hijau(kendaraan_timur_pertama)
-waktu_hijau_selatan = total_waktu_hijau(kendaraan_selatan_pertama)
-waktu_hijau_barat = total_waktu_hijau(kendaraan_barat_pertama)
-waktu_hijau_utara = total_waktu_hijau(kendaraan_utara_pertama)
-
-waktu_ruas={
-    'timur':[waktu_hijau_timur,0],
-    'selatan':[waktu_hijau_selatan,0],
-    'barat':[waktu_hijau_barat,0],
-    'utara':[waktu_hijau_utara,0]
-}
-
-def total_waktu_merah(waktu_ruas):
-    # for i in range(0,3):   
-    # current_ruas = list(waktu_ruas.values())[i]
-    # merah_ruas_next = current_ruas[0] + current_ruas[1] + 3
-
-    waktu_ruas['selatan'][1] = waktu_ruas['timur'][0] + waktu_ruas['timur'][1] + 3 
-    waktu_ruas['barat'][1] = waktu_ruas['selatan'][0] + waktu_ruas['selatan'][1] + 3 
-    waktu_ruas['utara'][1] = waktu_ruas['barat'][0] + waktu_ruas['barat'][1] + 3
-
-
-    # print(waktu_ruas)
-    return waktu_ruas
-
-        # waktu_ruas[current_ruas][1].values() = mereah_ruas_next
-    # print(waktu_ruas)
-
-print(total_waktu_merah(waktu_ruas))  
-
+timur.setRedTime(0)
+selatan.setRedTime(selatan.countRedTime(timur))
+barat.setRedTime(barat.countRedTime(selatan))
+utara.setRedTime(timur.countRedTime(barat))
 
 GPIO.setwarnings(False)
-
 GPIO.setmode(GPIO.BCM)
 
-#Setup semua lampu untuk diassign
-for arah in ruas.values():
-    for i in range(3):
-        GPIO.setup(arah[i],GPIO.OUT)
-        GPIO.output(arah[i],False)
-    # GPIO.setup(arah[1],GPIO.OUT)
-    # GPIO.setup(arah[2],GPIO.OUT)
+tm_timur= tm1637.TM1637(clk=timur.getPinTraffic()[0],dio=timur.getDio())
+tm_selatan = tm1637.TM1637(clk=selatan.getPinTraffic()[0],dio=selatan.getDio())
+tm_barat = tm1637.TM1637(clk=barat.getPinTraffic()[0],dio=barat.getDio())
+tm_utara = tm1637.TM1637(clk=utara.getPinTraffic()[0],dio=utara.getDio())
 
-
-tm = tm1637.TM1637(clk=ruas['timur'][0],dio=5)
-tm_2 = tm1637.TM1637(clk=ruas['selatan'][0],dio=6)
-tm_3 = tm1637.TM1637(clk=ruas['barat'][0],dio=13)
-tm_4 = tm1637.TM1637(clk=ruas['utara'][0],dio=19)
-
-#initially turn 
-
-#fungsi mati nyalain lampu
-def light_on(arah,green=False,yellow=False,red=False):
-    if green:
-        GPIO.output(ruas[arah][0],True)
-        GPIO.output(ruas[arah][1],False)
-        GPIO.output(ruas[arah][2],False)
-    elif yellow:
-        GPIO.output(ruas[arah][0],False)
-        GPIO.output(ruas[arah][1],True)
-        GPIO.output(ruas[arah][2],False)
-    elif red:
-        GPIO.output(ruas[arah][0],False)
-        GPIO.output(ruas[arah][1],False)
-        GPIO.output(ruas[arah][2],True)
+green = "green"
+red = "red"
+yellow = "yellow"
 
 try:
+    while(True):    
+        timur.light_on(green)
+        selatan.light_on(red)
+        barat.light_on(red)
+        utara.light_on(red)
 
-    while(True):
-        total_waktu_merah(waktu_ruas)
-
-        tm.numbers(00, waktu_ruas['timur'][0])
-        tm_2.numbers(00, waktu_ruas['selatan'][1])
-        tm_3.numbers(00, waktu_ruas['barat'][1])
-        tm_4.numbers(00, waktu_ruas['utara'][1])
-        #Timur Lampu Hijau nyala
-        light_on("timur",green=True)
-        #selatan lampu merah nyala
-        light_on("selatan",red=True)
-        # GPIO.output(ruas['selatan'][0],False)
-        # GPIO.output(ruas['selatan'][1],False)
-        # GPIO.output(ruas['selatan'][2],True)
-        light_on("barat",red=True)
-        # GPIO.output(ruas['barat'][0],False)
-        # GPIO.output(ruas['barat'][1],False)
-        # GPIO.output(ruas['barat'][2],True)
-        light_on("utara",red=True)
-        
-        
-        
+        for i in range(0,utara.getRedTime()):
+            if timur.getGreenTime()==1:
+                timur.light_on(yellow)
+                time.sleep(1)
+                timur.updateTime(green)
+                timur.light_on(red)
+                tm_timur.numbers(00,timur.getRedTime())
+                selatan.light_on(yellow)
+                time.sleep(1)
+                selatan.light_on(green)
+                tm_selatan.numbers(00,selatan.getGreenTime())
+            tm_timur.numbers(00,timur.getGreenTime())
+            tm_selatan.numbers(00,selatan.getRedTime())
+            tm_barat.numbers(00,barat.getRedTime())
+            tm_utara.numbers(00,utara.getRedTime())
+            time.sleep(1)
+            timur.updateTime(green)
+            selatan.updateTime(red)
+            barat.updateTime(red)
+            utara.updateTime(red)
+            i+=1
 
 except KeyboardInterrupt:
-    tm.write([0, 0, 0, 0])
-    tm_2.write([0,0,0,0])
-    tm_3.write([0,0,0,0])
-    tm_4.write([0,0,0,0])    
+    tm_timur.write([0, 0, 0, 0])
+    tm_selatan.write([0,0,0,0])
+    tm_barat.write([0,0,0,0])
+    tm_utara.write([0,0,0,0])    
     GPIO.cleanup()
