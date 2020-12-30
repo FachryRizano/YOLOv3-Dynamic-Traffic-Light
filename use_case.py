@@ -30,6 +30,9 @@ timur.setRedTime(3)
 selatan.setRedTime(selatan.countRedTime(timur))
 barat.setRedTime(barat.countRedTime(selatan))
 utara.setRedTime(utara.countRedTime(barat))
+# selatan.setRedTime(10)
+# barat.setRedTime(10)
+# utara.setRedTime(10)
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -44,33 +47,68 @@ tm_utara = tm1637.TM1637(clk=utara.getPinTraffic()[0],dio=utara.getDio())
 green = "green"
 red = "red"
 yellow = "yellow"
-
-async def countdown():
-    for i in range(100):
-        timur.updateTime(green)
-        selatan.updateTime(red)
-        barat.updateTime(red)
-        utara.updateTime(red)
+async def timurCountdown():
+    while timur.getGreenTime() > -1:
         tm_timur.numbers(00,timur.getGreenTime())
         tm_selatan.numbers(00,selatan.getRedTime())
         tm_barat.numbers(00,barat.getRedTime())
         tm_utara.numbers(00,utara.getRedTime())
         await asyncio.sleep(1)
-        if timur.getGreenTime()==0:
+        timur.updateTime(green)
+        selatan.updateTime(red)
+        barat.updateTime(red)
+        utara.updateTime(red)
+        if timur.getGreenTime() == 0:
             break
-    
-    
 
-async def dariTimurKeSelatan():
-        timur.light_on(yellow)
-        await asyncio.sleep(1)
-        timur.light_on(red)
-        tm_timur.numbers(00,selatan.getRedTime())
-        await asyncio.sleep(1)
-        selatan.light_on(yellow)
-        await asyncio.sleep(1)
-        selatan.light_on(green)
+
+async def selatanCountdown():
+    while selatan.getGreenTime() > -1:
+        tm_timur.numbers(00,timur.getRedTime())
         tm_selatan.numbers(00,selatan.getGreenTime())
+        tm_barat.numbers(00,barat.getRedTime())
+        tm_utara.numbers(00,utara.getRedTime())
+        await asyncio.sleep(1)
+        timur.updateTime(red)
+        selatan.updateTime(green)
+        barat.updateTime(red)
+        utara.updateTime(red)    
+    
+async def baratCountdown():
+    while barat.getGreenTime() > -1:
+        tm_timur.numbers(00,timur.getRedTime())
+        tm_selatan.numbers(00,selatan.getRedTime())
+        tm_barat.numbers(00,barat.getGreenTime())
+        tm_utara.numbers(00,utara.getRedTime())
+        await asyncio.sleep(1)
+        timur.updateTime(red)
+        selatan.updateTime(red)
+        barat.updateTime(green)
+        utara.updateTime(red)
+    utaraCountdown()
+
+async def utaraCountdown():
+    while utara.getGreenTime() > -1:
+        tm_timur.numbers(00,timur.getRedTime())
+        tm_selatan.numbers(00,selatan.getRedTime())
+        tm_barat.numbers(00,barat.getRedTime())
+        tm_utara.numbers(00,utara.getGreenTime())
+        await asyncio.sleep(1)
+        timur.updateTime(red)
+        selatan.updateTime(red)
+        barat.updateTime(red)
+        utara.updateTime(green)
+
+async def transisiLampu():
+    timur.light_on(yellow)
+    await asyncio.sleep(1)
+    
+    timur.light_on(red)
+    await asyncio.sleep(1)
+    selatan.light_on(yellow)
+    await asyncio.sleep(1)
+    selatan.light_on(green)
+    await asyncio.sleep(selatan.getGreenTime())
 
 #Fungsi transisi lampu
 # async def lampTransition(object):
@@ -83,23 +121,25 @@ async def dariTimurKeSelatan():
 #         await asyncio.sleep(1)
 #         obj.light_on(green)
 #Fungsi transisi waktu
-async def timeTransition():
+# async def timeTransition():
     #set waktu ketika lampu merah nyala
     #set waktu ketika lampu hijau nyala
 
 #Fungsi transisi lampu 
 #jika durasi greentime abis maka ganti lampu jadi kuning sedetik, setelah itu merah
 
-
 async def main():
     timur.light_on(green)
     selatan.light_on(red)
     barat.light_on(red)
     utara.light_on(red)
-    asyncio.gather(countdown())
+    asyncio.gather(timurCountdown())
     await asyncio.sleep(timur.getGreenTime())
-    asyncio.gather(dariTimurKeSelatan())
-    await asyncio.sleep(3)
+    asyncio.gather(transisiLampu())
+    asyncio.gather(selatanCountdown())
+    await asyncio.sleep(selatan.getGreenTime())
+    
+    # await asyncio.sleep(3)
     # loop.stop()
 
 if __name__ == "__main__":
