@@ -24,10 +24,12 @@ selatan.setGreenTime(selatan.countGreenTime(kendaraan_selatan_pertama))
 barat.setGreenTime(selatan.countGreenTime(kendaraan_barat_pertama))
 utara.setGreenTime(utara.countGreenTime(kendaraan_utara_pertama))
 
-timur.setRedTime(0)
+
+
+timur.setRedTime(3)
 selatan.setRedTime(selatan.countRedTime(timur))
 barat.setRedTime(barat.countRedTime(selatan))
-utara.setRedTime(timur.countRedTime(barat))
+utara.setRedTime(utara.countRedTime(barat))
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -44,29 +46,18 @@ red = "red"
 yellow = "yellow"
 
 async def countdown():
-    for i in range(utara.getRedTime()):
-        if timur.getGreenTime() < 0:
-            tm_timur.numbers(00,timur.getRedTime())
-            tm_selatan.numbers(00,selatan.getRedTime())
-            tm_barat.numbers(00,barat.getRedTime())
-            tm_utara.numbers(00,utara.getRedTime())
-            await asyncio.sleep(1)
-            timur.updateTime(red)
-            selatan.updateTime(red)
-            barat.updateTime(red)
-            utara.updateTime(red)
-            # if selatan.getRedTime()==0:
+    for i in range(100):
+        timur.updateTime(green)
+        selatan.updateTime(red)
+        barat.updateTime(red)
+        utara.updateTime(red)
+        tm_timur.numbers(00,timur.getGreenTime())
+        tm_selatan.numbers(00,selatan.getRedTime())
+        tm_barat.numbers(00,barat.getRedTime())
+        tm_utara.numbers(00,utara.getRedTime())
+        await asyncio.sleep(1)
+        if timur.getGreenTime()==0:
             break
-        else:
-            tm_timur.numbers(00,timur.getGreenTime())
-            tm_selatan.numbers(00,selatan.getRedTime())
-            tm_barat.numbers(00,barat.getRedTime())
-            tm_utara.numbers(00,utara.getRedTime())
-            await asyncio.sleep(1)
-            timur.updateTime(green)
-            selatan.updateTime(red)
-            barat.updateTime(red)
-            utara.updateTime(red)
     
     
 
@@ -74,12 +65,32 @@ async def dariTimurKeSelatan():
         timur.light_on(yellow)
         await asyncio.sleep(1)
         timur.light_on(red)
+        tm_timur.numbers(00,selatan.getRedTime())
         await asyncio.sleep(1)
         selatan.light_on(yellow)
         await asyncio.sleep(1)
         selatan.light_on(green)
         tm_selatan.numbers(00,selatan.getGreenTime())
-         
+
+#Fungsi transisi lampu
+# async def lampTransition(object):
+#     if obj.getGreenTime() == 0:
+#         obj.light_on(yellow)
+#         await asyncio.sleep(1)
+#         obj.light_on(red)
+#     else obj.getRedTime()==0:
+#         obj.light_on(yellow)
+#         await asyncio.sleep(1)
+#         obj.light_on(green)
+#Fungsi transisi waktu
+async def timeTransition():
+    #set waktu ketika lampu merah nyala
+    #set waktu ketika lampu hijau nyala
+
+#Fungsi transisi lampu 
+#jika durasi greentime abis maka ganti lampu jadi kuning sedetik, setelah itu merah
+
+
 async def main():
     timur.light_on(green)
     selatan.light_on(red)
@@ -88,16 +99,14 @@ async def main():
     asyncio.gather(countdown())
     await asyncio.sleep(timur.getGreenTime())
     asyncio.gather(dariTimurKeSelatan())
-    await asyncio.sleep(4)
-          
-    
+    await asyncio.sleep(3)
+    # loop.stop()
 
 if __name__ == "__main__":
     try:    
         while(True):
             loop = asyncio.get_event_loop()
             loop.run_until_complete(main())
-
     except KeyboardInterrupt:
         tm_timur.write([0, 0, 0, 0])
         tm_selatan.write([0,0,0,0])
