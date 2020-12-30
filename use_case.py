@@ -48,28 +48,6 @@ try:
         barat.light_on(red)
         utara.light_on(red)
 
-        for i in range(0,utara.getRedTime()):
-            if timur.getGreenTime()==1:
-                timur.light_on(yellow)
-                time.sleep(1)
-                timur.updateTime(green)
-                timur.light_on(red)
-                tm_timur.numbers(00,timur.getRedTime())
-                selatan.light_on(yellow)
-                time.sleep(1)
-                selatan.light_on(green)
-                tm_selatan.numbers(00,selatan.getGreenTime())
-            tm_timur.numbers(00,timur.getGreenTime())
-            tm_selatan.numbers(00,selatan.getRedTime())
-            tm_barat.numbers(00,barat.getRedTime())
-            tm_utara.numbers(00,utara.getRedTime())
-            time.sleep(1)
-            timur.updateTime(green)
-            selatan.updateTime(red)
-            barat.updateTime(red)
-            utara.updateTime(red)
-            i+=1
-
 except KeyboardInterrupt:
     tm_timur.write([0, 0, 0, 0])
     tm_selatan.write([0,0,0,0])
