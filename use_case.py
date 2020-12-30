@@ -37,42 +37,73 @@ tm_selatan = tm1637.TM1637(clk=selatan.getPinTraffic()[0],dio=selatan.getDio())
 tm_barat = tm1637.TM1637(clk=barat.getPinTraffic()[0],dio=barat.getDio())
 tm_utara = tm1637.TM1637(clk=utara.getPinTraffic()[0],dio=utara.getDio())
 
+
+
 green = "green"
 red = "red"
 yellow = "yellow"
 
-try:
-    while(True):    
-        timur.light_on(green)
-        selatan.light_on(red)
-        barat.light_on(red)
-        utara.light_on(red)
-
-        for i in range(0,utara.getRedTime()):
-            if timur.getGreenTime()==1:
-                timur.light_on(yellow)
-                time.sleep(1)
-                timur.updateTime(green)
-                timur.light_on(red)
-                tm_timur.numbers(00,timur.getRedTime())
-                selatan.light_on(yellow)
-                time.sleep(1)
-                selatan.light_on(green)
-                tm_selatan.numbers(00,selatan.getGreenTime())
+async def countdown():
+    for i in range(utara.getRedTime()):
+        if timur.getGreenTime() < 0:
+            tm_timur.numbers(00,timur.getRedTime())
+            tm_selatan.numbers(00,selatan.getRedTime())
+            tm_barat.numbers(00,barat.getRedTime())
+            tm_utara.numbers(00,utara.getRedTime())
+            await asyncio.sleep(1)
+            timur.updateTime(red)
+            selatan.updateTime(red)
+            barat.updateTime(red)
+            utara.updateTime(red)
+            # if selatan.getRedTime()==0:
+            break
+        else:
             tm_timur.numbers(00,timur.getGreenTime())
             tm_selatan.numbers(00,selatan.getRedTime())
             tm_barat.numbers(00,barat.getRedTime())
             tm_utara.numbers(00,utara.getRedTime())
-            time.sleep(1)
+            await asyncio.sleep(1)
             timur.updateTime(green)
             selatan.updateTime(red)
             barat.updateTime(red)
             utara.updateTime(red)
-            i+=1
+    
+    
 
-except KeyboardInterrupt:
-    tm_timur.write([0, 0, 0, 0])
-    tm_selatan.write([0,0,0,0])
-    tm_barat.write([0,0,0,0])
-    tm_utara.write([0,0,0,0])    
-    GPIO.cleanup()
+async def dariTimurKeSelatan():
+        timur.light_on(yellow)
+        await asyncio.sleep(1)
+        timur.light_on(red)
+        await asyncio.sleep(1)
+        selatan.light_on(yellow)
+        await asyncio.sleep(1)
+        selatan.light_on(green)
+        tm_selatan.numbers(00,selatan.getGreenTime())
+         
+async def main():
+    timur.light_on(green)
+    selatan.light_on(red)
+    barat.light_on(red)
+    utara.light_on(red)
+    asyncio.gather(countdown())
+    await asyncio.sleep(timur.getGreenTime())
+    asyncio.gather(dariTimurKeSelatan())
+    await asyncio.sleep(4)
+          
+    
+
+if __name__ == "__main__":
+    try:    
+        while(True):
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(main())
+
+    except KeyboardInterrupt:
+        tm_timur.write([0, 0, 0, 0])
+        tm_selatan.write([0,0,0,0])
+        tm_barat.write([0,0,0,0])
+        tm_utara.write([0,0,0,0])    
+        GPIO.cleanup()
+    
+    finally:
+        loop.close()
