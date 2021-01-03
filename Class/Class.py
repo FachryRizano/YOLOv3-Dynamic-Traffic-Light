@@ -15,6 +15,9 @@ class Traffic:
     
     def getRedTime(self):
         return self.__redtime
+
+    def getStatus(self):
+        return self.__status
     
     def countGreenTime(self,total_kendaraan):
         threshold = 15
@@ -30,6 +33,9 @@ class Traffic:
         elif time == "red":
             self.__redtime -= 1
     
+    def setStatus(self,status):
+        self.__status = status
+
     def setGreenTime(self,greenTime):
         self.__greentime = greenTime
 
