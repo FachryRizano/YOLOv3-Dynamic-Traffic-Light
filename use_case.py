@@ -26,7 +26,7 @@ utara.setGreenTime(utara.countGreenTime(kendaraan_utara_pertama))
 
 
 
-timur.setRedTime(3)
+timur.setRedTime(0)
 selatan.setRedTime(selatan.countRedTime(timur))
 barat.setRedTime(barat.countRedTime(selatan))
 utara.setRedTime(utara.countRedTime(barat))
@@ -82,13 +82,16 @@ async def dariTimurKeSelatan():
 #         obj.light_on(yellow)
 #         await asyncio.sleep(1)
 #         obj.light_on(green)
+
 #Fungsi transisi waktu
 async def timeTransition():
     #set waktu ketika lampu merah nyala
     #set waktu ketika lampu hijau nyala
 
 #Fungsi transisi lampu 
-#jika durasi greentime abis maka ganti lampu jadi kuning sedetik, setelah itu merah
+#greentime decreasing sampe 0
+#1 detik (untuk yellow light)
+#ganti waktu red time decreasing
 
 
 async def main():
