@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import asyncio
 class Traffic:
 
     def __init__(self,arah, dio,pinTraffic):
@@ -14,6 +15,9 @@ class Traffic:
     
     def getRedTime(self):
         return self.__redtime
+
+    def getStatus(self):
+        return self.__status
     
     def countGreenTime(self,total_kendaraan):
         threshold = 15
@@ -29,6 +33,9 @@ class Traffic:
         elif time == "red":
             self.__redtime -= 1
     
+    def setStatus(self,status):
+        self.__status = status
+
     def setGreenTime(self,greenTime):
         self.__greentime = greenTime
 
@@ -49,11 +56,11 @@ class Traffic:
             GPIO.output(self.getPinTraffic()[0],True)
             GPIO.output(self.getPinTraffic()[1],False)
             GPIO.output(self.getPinTraffic()[2],False)
-        elif color == "yellow":
-            GPIO.output(self.getPinTraffic()[0],False)
-            GPIO.output(self.getPinTraffic()[1],True)
-            GPIO.output(self.getPinTraffic()[2],False)
         elif color == "red":
             GPIO.output(self.getPinTraffic()[0],False)
             GPIO.output(self.getPinTraffic()[1],False)
             GPIO.output(self.getPinTraffic()[2],True)
+        elif color == "yellow":
+            GPIO.output(self.getPinTraffic()[0],False)
+            GPIO.output(self.getPinTraffic()[1],True)
+            GPIO.output(self.getPinTraffic()[2],False)
