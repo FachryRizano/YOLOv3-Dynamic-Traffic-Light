@@ -1,0 +1,10 @@
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+import cv2
+import numpy as np
+import tensorflow as tf
+from YOLO.model.utils import detect_realtime, Load_Yolo_model
+from YOLO.model.configs import *
+
+yolo = Load_Yolo_model()
+detect_realtime(yolo, '', input_size=YOLO_INPUT_SIZE, show=True, CLASSES=TRAIN_CLASSES, rectangle_colors=(255, 0, 0))
