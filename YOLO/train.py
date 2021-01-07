@@ -7,14 +7,13 @@ import shutil
 import numpy as np
 import tensorflow as tf
 #from tensorflow.keras.utils import plot_model
-from yolov3.dataset import Dataset
-from yolov3.yolov4 import Create_Yolo, compute_loss
-from yolov3.utils import load_yolo_weights
-from yolov3.configs import *
-from evaluate_mAP import get_mAP
+from model.dataset import Dataset
+from model.yolov3_tiny import *
+from model.utils import load_yolo_weights
+from model.configs import *
+from model.evaluate_mAP import get_mAP
     
-if YOLO_TYPE == "yolov4":
-    Darknet_weights = YOLO_V4_TINY_WEIGHTS if TRAIN_YOLO_TINY else YOLO_V4_WEIGHTS
+
 if YOLO_TYPE == "yolov3":
     Darknet_weights = YOLO_V3_TINY_WEIGHTS if TRAIN_YOLO_TINY else YOLO_V3_WEIGHTS
 if TRAIN_YOLO_TINY: TRAIN_MODEL_NAME += "_Tiny"

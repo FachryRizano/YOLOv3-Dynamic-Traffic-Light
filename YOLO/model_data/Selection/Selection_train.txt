@@ -1,0 +1,12 @@
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_0.png 510,189,818,506,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_1.png 263,226,528,546,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_10.png 571,295,979,668,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_11.png 376,160,905,615,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_2.png 214,189,517,475,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_3.png 310,297,827,671,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_4.png 508,211,845,565,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_5.png 590,432,898,659,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_6.png 443,249,963,602,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_7.png 363,326,716,583,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_8.png 438,318,762,570,0
+C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/train\Selection/opencv_frame_9.png 604,264,919,501,0
