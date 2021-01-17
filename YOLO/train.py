@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 from tensorflow.python.client import device_lib
 print(device_lib.list_local_devices())
@@ -133,7 +133,7 @@ def main():
 
         if len(testset) == 0:
             print("configure TEST options to validate model")
-            yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME))
+            yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME),save_format="h5")
             continue
         
         count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
@@ -155,16 +155,16 @@ def main():
         print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
               format(giou_val/count, conf_val/count, prob_val/count, total_val/count))
 
-        if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
-            save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME+"_val_loss_{:7.2f}".format(total_val/count))
-            yolo.save_weights(save_directory)
+        # if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
+        #     save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME+"_val_loss_{:7.2f}".format(total_val/count))
+        #     yolo.save_weights(save_directory)
         if TRAIN_SAVE_BEST_ONLY and best_val_loss>total_val/count:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
-            yolo.save_weights(save_directory)
+            yolo.save_weights(save_directory,save_format='h5')
             best_val_loss = total_val/count
-        if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
-            save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
-            yolo.save_weights(save_directory)
+        # if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
+        #     save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
+        #     yolo.save_weights(save_directory,save_format="tf")
 
     # measure mAP of trained custom model
     mAP_model.load_weights(save_directory) # use keras weights

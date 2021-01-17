@@ -130,6 +130,22 @@ def decode(conv_output, NUM_CLASS, i=0):
     # calculating the predicted probability category box object
     return tf.concat([pred_xywh, pred_conf, pred_prob], axis=-1)
 
+
+# def save_tflite():
+#     converter = tf.lite.TFLiteConverter.from_saved_model(weights)
+
+ 
+#     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+#     converter.optimizations = [tf.lite.Optimize.DEFAULT]
+#     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
+#     converter.allow_custom_ops = True
+#     converter.representative_dataset = representative_data_gen
+
+#     tflite_model = converter.convert()
+#     interpreter = tf.lite.Interpreter(tflite_model)
+    
+
+  
 def Create_Yolo(input_size=416, channels=3, training=False, CLASSES=YOLO_COCO_CLASSES):
     NUM_CLASS = len(read_class_names(CLASSES))
     input_layer  = Input([input_size, input_size, channels])
@@ -145,7 +161,10 @@ def Create_Yolo(input_size=416, channels=3, training=False, CLASSES=YOLO_COCO_CL
         output_tensors.append(pred_tensor)
 
     Yolo = tf.keras.Model(input_layer, output_tensors)
-    return Yolo
+    #merubah model menjadi tflite
+    # converter = tf.lite.TFLiteConverter.from_keras_model(Yolo)
+    # Yolo = converter.convert()
+    return Yolo 
 
 
 def bbox_iou(boxes1, boxes2):
