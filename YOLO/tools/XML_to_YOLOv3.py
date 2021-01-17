@@ -6,10 +6,10 @@ foldername = os.path.basename(os.getcwd())
 if foldername == "tools": os.chdir("..")
 
 
-data_dir = './model_data/Selection_dataset/'
-Dataset_names_path = "./model_data/Selection/Selection_names.txt"
-Dataset_train = "./model_data/Selection/Selection_train.txt"
-Dataset_test = "./model_data/Selection/Selection_test.txt"
+data_dir = '/model_data/Mobil_dataset/'
+Dataset_names_path = "./model_data/Mobil/Mobil_names.txt"
+Dataset_train = "./model_data/Mobil/Mobil_train.txt"
+Dataset_test = "./model_data/Mobil/Mobil_test.txt"
 is_subfolder = True
 
 Dataset_names = []

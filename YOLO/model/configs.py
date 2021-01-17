@@ -20,12 +20,12 @@ TRAIN_YOLO_TINY             = True
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
 TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in training process (may require a lot disk space) (False recommended)
 # TRAIN_CLASSES               = "mnist/mnist.names"
-TRAIN_CLASSES               = "./model_data/Selection/Selection_names.txt"
+TRAIN_CLASSES               = "./model_data/Mobil/Mobil_names.txt"
 # TRAIN_ANNOT_PATH            = "mnist/mnist_train.txt"
-TRAIN_ANNOT_PATH               ="./model_data/Selection/Selection_train.txt"
+TRAIN_ANNOT_PATH               ="./model_data/Mobil/Mobil_train.txt"
 TRAIN_LOGDIR                = "./log"
 TRAIN_CHECKPOINTS_FOLDER    = "checkpoints"
-TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom_Tiny"
+TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
 TRAIN_BATCH_SIZE            = 4
 TRAIN_INPUT_SIZE            = 416
@@ -39,7 +39,7 @@ TRAIN_EPOCHS                = 10
 
 # TEST options
 # TEST_ANNOT_PATH             = "mnist/mnist_test.txt"
-TEST_ANNOT_PATH             = "./model_data/Selection/Selection_test.txt"
+TEST_ANNOT_PATH             = "./model_data/Mobil/Mobil_test.txt"
 TEST_BATCH_SIZE             = 4
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False

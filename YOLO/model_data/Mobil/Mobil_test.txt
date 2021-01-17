@@ -1,0 +1,6 @@
+/home/pi/Desktop/Project-Skripsi/YOLO/model_data/Mobil_dataset/test/Kijang_Kapsul/opencv_frame_27.png 679,256,908,448,0
+/home/pi/Desktop/Project-Skripsi/YOLO/model_data/Mobil_dataset/test/Kijang_Kapsul/opencv_frame_26.png 463,218,651,426,0
+/home/pi/Desktop/Project-Skripsi/YOLO/model_data/Mobil_dataset/test/Kijang_Kapsul/opencv_frame_29.png 580,206,705,341,0
+/home/pi/Desktop/Project-Skripsi/YOLO/model_data/Mobil_dataset/test/Kijang_Kapsul/opencv_frame_28.png 468,67,671,272,0
+/home/pi/Desktop/Project-Skripsi/YOLO/model_data/Mobil_dataset/test/Kijang_Kapsul/opencv_frame_25.png 404,475,594,717,0
+/home/pi/Desktop/Project-Skripsi/YOLO/model_data/Mobil_dataset/test/Kijang_Kapsul/opencv_frame_24.png 641,419,857,674,0
