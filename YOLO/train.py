@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 #from tensorflow.keras.utils import plot_model
 from model.dataset import Dataset
-from model.yolov3_tiny import *
+from model.yolov3 import *
 from model.utils import load_yolo_weights
 from model.configs import *
 from model.evaluate_mAP import get_mAP

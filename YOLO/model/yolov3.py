@@ -166,7 +166,7 @@ def YOLOv3_tiny(input_layer, NUM_CLASS):
 
     return [conv_mbbox, conv_lbbox]
 
-def Create_Yolov3(input_size=416, channels=3, training=False, CLASSES=YOLO_COCO_CLASSES):
+def Create_Yolo(input_size=416, channels=3, training=False, CLASSES=YOLO_COCO_CLASSES):
     NUM_CLASS = len(read_class_names(CLASSES))
     input_layer  = Input([input_size, input_size, channels])
 

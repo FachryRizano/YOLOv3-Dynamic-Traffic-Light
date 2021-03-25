@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.saved_model import tag_constants
 from model.dataset import Dataset
-from model.yolov3_tiny import Create_Yolo
+from model.yolov3 import Create_Yolo
 from model.utils import load_yolo_weights, detect_image, image_preprocess, postprocess_boxes, nms, read_class_names
 from model.configs import *
 import shutil

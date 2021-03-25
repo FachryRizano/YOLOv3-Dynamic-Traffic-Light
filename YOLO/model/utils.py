@@ -10,7 +10,7 @@ import colorsys
 import numpy as np
 import tensorflow as tf
 from model.configs import *
-from model.yolov3_tiny import *
+from model.yolov3 import *
 
 def load_yolo_weights(model, weights_file):
     tf.keras.backend.clear_session() # used to reset layer names

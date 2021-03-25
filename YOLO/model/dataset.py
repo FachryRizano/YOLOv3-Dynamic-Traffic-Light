@@ -4,7 +4,7 @@ import random
 import numpy as np
 import tensorflow as tf
 from model.utils import read_class_names, image_preprocess
-from model.yolov3_tiny import bbox_iou
+from model.yolov3 import bbox_iou
 from model.configs import *
 
 
