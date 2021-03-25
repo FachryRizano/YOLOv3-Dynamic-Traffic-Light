@@ -17,6 +17,14 @@ class BatchNormalization(BatchNormalization):
         training = tf.logical_and(training, self.trainable)
         return super().call(x, training)
 
+def read_class_names(class_file_name):
+    # loads class name from a file
+    names = {}
+    with open(class_file_name, 'r') as data:
+        for ID, name in enumerate(data):
+            names[ID] = name.strip('\n')
+    return names
+
 def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True):
     if downsample:
         input_layer = ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
