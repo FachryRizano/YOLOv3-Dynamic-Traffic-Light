@@ -1,4 +1,0 @@
-C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/test\Selection/opencv_frame_12.png 628,316,991,588,0
-C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/test\Selection/opencv_frame_13.png 714,206,1276,670,0
-C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/test\Selection/opencv_frame_14.png 443,64,771,383,0
-C:\Users\Asus\Desktop\Project-Skripsi\YOLO./model_data/Selection_dataset/test\Selection/opencv_frame_15.png 305,240,688,462,0
