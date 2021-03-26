@@ -133,7 +133,7 @@ def main():
 
         if len(testset) == 0:
             print("configure TEST options to validate model")
-            yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME),save_format="h5")
+            yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME))
             continue
         
         count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
