@@ -155,16 +155,16 @@ def main():
         print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
               format(giou_val/count, conf_val/count, prob_val/count, total_val/count))
 
-        # if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
-        #     save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME+"_val_loss_{:7.2f}".format(total_val/count))
-        #     yolo.save_weights(save_directory)
+        if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
+            save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME+"_val_loss_{:7.2f}".format(total_val/count))
+            yolo.save_weights(save_directory)
         if TRAIN_SAVE_BEST_ONLY and best_val_loss>total_val/count:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
-            yolo.save_weights(save_directory,save_format='h5')
+            yolo.save_weights(save_directory)
             best_val_loss = total_val/count
-        # if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
-        #     save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
-        #     yolo.save_weights(save_directory,save_format="tf")
+        if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
+            save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
+            yolo.save_weights(save_directory)
 
     # measure mAP of trained custom model
     mAP_model.load_weights(save_directory) # use keras weights
