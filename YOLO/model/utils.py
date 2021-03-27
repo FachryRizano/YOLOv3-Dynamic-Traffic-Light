@@ -11,6 +11,7 @@ import numpy as np
 import tensorflow as tf
 from model.configs import *
 from model.yolov3 import *
+import urllib
 
 def read_class_names(class_file_name):
     # loads class name from a file
@@ -331,20 +332,24 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
 
     return np.concatenate([coors, scores[:, np.newaxis], classes[:, np.newaxis]], axis=-1)
 
+
 def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
     times = []
-    vid = cv2.VideoCapture(0)
-
+    # vid = cv2.VideoCapture(0)
+    url='http://192.168.216.94/cam-hi.jpg'
     # by default VideoCapture returns float instead of int
-    width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(vid.get(cv2.CAP_PROP_FPS))
-    codec = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(output_path, codec, fps, (width, height)) # output_path must be .mp4
+    # width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # fps = int(vid.get(cv2.CAP_PROP_FPS))
+    # codec = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter(output_path, codec, fps, (width, height)) # output_path must be .mp4
 
     while True:
-        _, frame = vid.read()
+        # _, frame = vid.read()
 
+        imgResp=urllib.request.urlopen(url)
+        imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
+        frame=cv2.imdecode(imgNp,-1)
         try:
             original_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             original_frame = cv2.cvtColor(original_frame, cv2.COLOR_BGR2RGB)
@@ -371,7 +376,8 @@ def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN
 
         bboxes = postprocess_boxes(pred_bbox, original_frame, input_size, score_threshold)
         bboxes = nms(bboxes, iou_threshold, method='nms')
-        
+
+        jumlah_object = [len(bboxes)]
         times.append(t2-t1)
         times = times[-20:]
         

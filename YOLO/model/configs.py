@@ -24,8 +24,8 @@ if YOLO_TYPE                == "yolov3":
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
-TRAIN_SAVE_CHECKPOINT       = True # saves all best validated checkpoints in training process (may require a lot disk space) (False recommended)
-TRAIN_CLASSES               = "/content/Data Train_classes.txt"
+TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in training process (may require a lot disk space) (False recommended)
+TRAIN_CLASSES               = "model_data/Real Car and Person/Data Class.txt"
 TRAIN_ANNOT_PATH            = "/content/Data Train.txt"
 TRAIN_LOGDIR                = "/content/YOLOv3-Dynamic-Traffic-Light/YOLO/log"
 TRAIN_CHECKPOINTS_FOLDER    = "checkpoints"
@@ -42,7 +42,7 @@ TRAIN_WARMUP_EPOCHS         = 2
 TRAIN_EPOCHS                = 2
 
 # TEST options
-TEST_ANNOT_PATH             = "/content/Data Test.txt"
+TEST_ANNOT_PATH             = r"C:\Users\Asus\Desktop\OIDv4_ToolKit\Data Test.txt"
 TEST_BATCH_SIZE             = 4
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False

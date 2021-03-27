@@ -9,4 +9,5 @@ from model.configs import *
 yolo = Load_Yolo_model()
 # converter = tf.lite.TFLiteConverter.from_keras_model(yolo)
 # yolo = converter.convert()
+
 detect_realtime(yolo, '', input_size=YOLO_INPUT_SIZE, show=True, CLASSES=TRAIN_CLASSES, rectangle_colors=(255, 0, 0))
