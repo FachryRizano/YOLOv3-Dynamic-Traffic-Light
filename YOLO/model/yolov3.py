@@ -6,6 +6,7 @@ from model.utils import *
 STRIDES         = np.array(YOLO_STRIDES)
 ANCHORS         = (np.array(YOLO_ANCHORS).T/STRIDES).T
 
+#Subclassing
 class BatchNormalization(BatchNormalization):
     # "Frozen state" and "inference mode" are two separate concepts.
     # `layer.trainable = False` is to freeze the layer, so the layer will use

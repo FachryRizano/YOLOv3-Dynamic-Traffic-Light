@@ -12,6 +12,7 @@ from model.yolov3 import *
 from model.utils import load_yolo_weights
 from model.configs import *
 from model.evaluate_mAP import get_mAP
+from collections import deque
     
 
 if YOLO_TYPE == "yolov3":
@@ -63,7 +64,6 @@ def main():
 
     
 
-    @tf.function
     def train_step(image_data, target):
         with tf.GradientTape() as tape:
             pred_result = yolo(image_data, training=True)
@@ -106,7 +106,7 @@ def main():
 
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
     
-    @tf.function
+    
     def validate_step(image_data, target):
         with tf.GradientTape() as tape:
             pred_result = yolo(image_data, training=False)
@@ -129,25 +129,9 @@ def main():
 
     best_val_loss = 1000 # should be large at start
 
-    ##Custom callbacks EarlyStopping
-    def Callback_EarlyStopping(LossList, min_delta=0.1, patience=20):
-    #No early stopping for 2*patience epochs 
-        if len(LossList)//patience < 2 :
-            return False
-        #Mean loss for last patience epochs and second-last patience epochs
-        mean_previous = np.mean(LossList[::-1][patience:2*patience]) #second-last
-        mean_recent = np.mean(LossList[::-1][:patience]) #last
-        #you can use relative or absolute change
-        delta_abs = np.abs(mean_recent - mean_previous) #abs change
-        delta_abs = np.abs(delta_abs / mean_previous)  # relative change
-        if delta_abs < min_delta :
-            print("*CB_ES* Loss didn't change much from last %d epochs"%(patience))
-            print("*CB_ES* Percent change in loss value:", delta_abs*1e2)
-            return True
-        else:
-            return False
-    
-    val_loss_seq = []
+    patience = 20
+    delta = 0.1
+    val_loss_history = deque(maxlen=patience+1)
     for epoch in range(TRAIN_EPOCHS):
         for image_data, target in trainset:
             results = train_step(image_data, target)
@@ -169,12 +153,15 @@ def main():
             conf_val += results[1]
             prob_val += results[2]
             total_val += results[3]
-            val_loss_seq.append(results)
-            early_stop_val = Callback_EarlyStopping(val_loss_seq,min_delta=0.1,patience=20)
-            if early_stop_val:
-                print(" Callback_EarlyStopping signal received at epoch= %d/%d"%(epoch,TRAIN_EPOCHS))
-                print("Terminating training ")
-                break 
+        
+        #Early Stopping Callbacks
+        val_loss_history.append(total_val)
+        if len(val_loss_history) > patience:
+          if val_loss_history.popleft()*delta < min(val_loss_history):
+            print(f'\nEarly stopping. No improvement of more than {delta:.5%} in '
+                  f'validation loss in the last {patience} epochs.')
+            break
+        
         # writing validate summary data
         with validate_writer.as_default():
             tf.summary.scalar("validate_loss/total_val", total_val/count, step=epoch)
@@ -186,6 +173,8 @@ def main():
         print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
               format(giou_val/count, conf_val/count, prob_val/count, total_val/count))
 
+        
+
         if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME+"_val_loss_{:7.2f}".format(total_val/count))
             yolo.save_weights(save_directory)
@@ -196,7 +185,8 @@ def main():
         if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
             yolo.save_weights(save_directory)
-
+        
+        
     # measure mAP of trained custom model
     try:
         mAP_model.load_weights(save_directory) # use keras weights
