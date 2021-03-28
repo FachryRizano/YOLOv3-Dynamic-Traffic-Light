@@ -21,6 +21,9 @@ if YOLO_TYPE                == "yolov3":
     YOLO_ANCHORS            = [[[10,  13], [16,   30], [33,   23]],
                                [[30,  61], [62,   45], [59,  119]],
                                [[116, 90], [156, 198], [373, 326]]]
+
+EARLY_STOPPING              = False
+DROPOUT_LAYER               = False
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
@@ -40,6 +43,7 @@ TRAIN_LR_INIT               = 1e-4
 TRAIN_LR_END                = 1e-6
 TRAIN_WARMUP_EPOCHS         = 2
 TRAIN_EPOCHS                = 100
+
 
 # TEST options
 TEST_ANNOT_PATH             = "/content/Data Test.txt"

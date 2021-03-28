@@ -132,6 +132,7 @@ def main():
     patience = 20
     delta = 0.1
     val_loss_history = deque(maxlen=patience+1)
+
     for epoch in range(TRAIN_EPOCHS):
         for image_data, target in trainset:
             results = train_step(image_data, target)
@@ -155,12 +156,13 @@ def main():
             total_val += results[3]
         
         #Early Stopping Callbacks
-        val_loss_history.append(total_val)
-        if len(val_loss_history) > patience:
-          if val_loss_history.popleft()*delta < min(val_loss_history):
-            print(f'\nEarly stopping. No improvement of more than {delta:.5%} in '
-                  f'validation loss in the last {patience} epochs.')
-            break
+        if EARLY_STOPPING:
+            val_loss_history.append(total_val)
+            if len(val_loss_history) > patience:
+                if val_loss_history.popleft()*delta < min(val_loss_history):
+                    print(f'\nEarly stopping. No improvement of more than {delta:.5%} in '
+                        f'validation loss in the last {patience} epochs.')
+                    break
         
         # writing validate summary data
         with validate_writer.as_default():
