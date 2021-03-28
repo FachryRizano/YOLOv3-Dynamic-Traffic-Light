@@ -420,5 +420,5 @@ def Load_Yolo_model():
             print("Loading custom weights from:", YOLO_CUSTOM_WEIGHTS)
             #ini model
             yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)
-            yolo.load_weights(f"./checkpoints/{TRAIN_MODEL_NAME}") # use custom weights
+            yolo.load_weights(f"./{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
     return yolo

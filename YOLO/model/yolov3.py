@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, Input, LeakyReLU, ZeroPadding2D, BatchNormalization, MaxPool2D
+from tensorflow.keras.layers import Conv2D, Input, LeakyReLU, ZeroPadding2D, BatchNormalization, MaxPool2D,Dropout
 from tensorflow.keras.regularizers import l2
 from model.utils import *
 STRIDES         = np.array(YOLO_STRIDES)
@@ -25,7 +25,7 @@ def read_class_names(class_file_name):
             names[ID] = name.strip('\n')
     return names
 
-def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True):
+def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True):#do=True):
     if downsample:
         input_layer = ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
         padding = 'valid'
@@ -40,8 +40,12 @@ def convolutional(input_layer, filters_shape, downsample=False, activate=True, b
                   bias_initializer=tf.constant_initializer(0.))(input_layer)
     if bn:
         conv = BatchNormalization()(conv)
-    if activate == True:
+    if activate:
         conv = LeakyReLU(alpha=0.1)(conv)
+    #Dropout
+    # if do:
+    #     conv = Dropout(0.33)(conv)
+
 
     return conv
 
@@ -118,11 +122,13 @@ def YOLOv3(input_layer, NUM_CLASS):
     conv_lobj_branch = convolutional(conv, (3, 3, 512, 1024))
     
     # conv_lbbox is used to predict large-sized objects , Shape = [None, 13, 13, 255] 
+    #also it calls as first detector
     conv_lbbox = convolutional(conv_lobj_branch, (1, 1, 1024, 3*(NUM_CLASS + 5)), activate=False, bn=False)
 
     conv = convolutional(conv, (1, 1,  512,  256))
     # upsample here uses the nearest neighbor interpolation method, which has the advantage that the
     # upsampling process does not need to learn, thereby reducing the network parameter  
+    #we need to upsample the tensor because we want to concatenate with the second route
     conv = upsample(conv)
 
     conv = tf.concat([conv, route_2], axis=-1)

@@ -1,6 +1,6 @@
 YOLO_TYPE                   = "yolov3" # yolov4 or yolov3
 YOLO_FRAMEWORK              = "tf" # "tf" or "trt"
-YOLO_V3_WEIGHTS             = '/content/yolov3.weights'
+YOLO_V3_WEIGHTS             = 'model_data/yolov3.weights'
 YOLO_V4_WEIGHTS             = "model_data/yolov4.weights"
 YOLO_V3_TINY_WEIGHTS        = "model_data/yolov3-tiny.weights"
 YOLO_V4_TINY_WEIGHTS        = "model_data/yolov4-tiny.weights"
@@ -22,14 +22,14 @@ if YOLO_TYPE                == "yolov3":
                                [[30,  61], [62,   45], [59,  119]],
                                [[116, 90], [156, 198], [373, 326]]]
 # Train options
-TRAIN_YOLO_TINY             = False
+TRAIN_YOLO_TINY             = True
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
 TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in training process (may require a lot disk space) (False recommended)
 TRAIN_CLASSES               = "model_data/Real Car and Person/Data Class.txt"
 TRAIN_ANNOT_PATH            = "/content/Data Train.txt"
-TRAIN_LOGDIR                = "/content/YOLOv3-Dynamic-Traffic-Light/YOLO/log"
-TRAIN_CHECKPOINTS_FOLDER    = "checkpoints"
-TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
+TRAIN_LOGDIR                = "log_tiny"
+TRAIN_CHECKPOINTS_FOLDER    = "checpoints_tiny"
+TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom_Tiny"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
 TRAIN_BATCH_SIZE            = 4
 TRAIN_INPUT_SIZE            = 416
@@ -42,7 +42,7 @@ TRAIN_WARMUP_EPOCHS         = 2
 TRAIN_EPOCHS                = 2
 
 # TEST options
-TEST_ANNOT_PATH             = r"C:\Users\Asus\Desktop\OIDv4_ToolKit\Data Test.txt"
+TEST_ANNOT_PATH             = "C:\\Users\\Asus\\Desktop\\OIDv4_ToolKit\\Data Test.txt"
 TEST_BATCH_SIZE             = 4
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False

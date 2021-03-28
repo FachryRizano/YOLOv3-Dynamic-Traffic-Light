@@ -61,7 +61,9 @@ def main():
     
     optimizer = tf.keras.optimizers.Adam()
 
+    
 
+    @tf.function
     def train_step(image_data, target):
         with tf.GradientTape() as tape:
             pred_result = yolo(image_data, training=True)
@@ -103,6 +105,8 @@ def main():
         return global_steps.numpy(), optimizer.lr.numpy(), giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(), total_loss.numpy()
 
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
+    
+    @tf.function
     def validate_step(image_data, target):
         with tf.GradientTape() as tape:
             pred_result = yolo(image_data, training=False)
@@ -124,12 +128,33 @@ def main():
     mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES) # create second model to measure mAP
 
     best_val_loss = 1000 # should be large at start
+
+    ##Custom callbacks EarlyStopping
+    def Callback_EarlyStopping(LossList, min_delta=0.1, patience=20):
+    #No early stopping for 2*patience epochs 
+        if len(LossList)//patience < 2 :
+            return False
+        #Mean loss for last patience epochs and second-last patience epochs
+        mean_previous = np.mean(LossList[::-1][patience:2*patience]) #second-last
+        mean_recent = np.mean(LossList[::-1][:patience]) #last
+        #you can use relative or absolute change
+        delta_abs = np.abs(mean_recent - mean_previous) #abs change
+        delta_abs = np.abs(delta_abs / mean_previous)  # relative change
+        if delta_abs < min_delta :
+            print("*CB_ES* Loss didn't change much from last %d epochs"%(patience))
+            print("*CB_ES* Percent change in loss value:", delta_abs*1e2)
+            return True
+        else:
+            return False
+    
+    val_loss_seq = []
     for epoch in range(TRAIN_EPOCHS):
         for image_data, target in trainset:
             results = train_step(image_data, target)
             cur_step = results[0]%steps_per_epoch
             print("epoch:{:2.0f} step:{:5.0f}/{}, lr:{:.6f}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
                   .format(epoch, cur_step, steps_per_epoch, results[1], results[2], results[3], results[4], results[5]))
+             #check every 20 epochs and stop if gen_valid_loss doesn't change by 10%
 
         if len(testset) == 0:
             print("configure TEST options to validate model")
@@ -144,6 +169,12 @@ def main():
             conf_val += results[1]
             prob_val += results[2]
             total_val += results[3]
+            val_loss_seq.append(results)
+            early_stop_val = Callback_EarlyStopping(val_loss_seq,min_delta=0.1,patience=20)
+            if early_stop_val:
+                print(" Callback_EarlyStopping signal received at epoch= %d/%d"%(epoch,TRAIN_EPOCHS))
+                print("Terminating training ")
+                break 
         # writing validate summary data
         with validate_writer.as_default():
             tf.summary.scalar("validate_loss/total_val", total_val/count, step=epoch)
