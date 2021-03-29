@@ -22,8 +22,11 @@ if YOLO_TYPE                == "yolov3":
                                [[30,  61], [62,   45], [59,  119]],
                                [[116, 90], [156, 198], [373, 326]]]
 
+#EarlyStopping
 EARLY_STOPPING              = False
 DROPOUT_LAYER               = False
+PATIENCE                    = 12
+DELTA                       = 0.1
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
