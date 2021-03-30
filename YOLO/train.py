@@ -1,12 +1,15 @@
 import os
+from tensorflow import keras as K
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'false'
 from tensorflow.python.client import device_lib
 print(device_lib.list_local_devices())
 import shutil
 import numpy as np
 import tensorflow as tf
 #from tensorflow.keras.utils import plot_model
+tf.keras.backend.clear_session()
 from model.dataset import Dataset
 from model.yolov3 import *
 from model.utils import load_yolo_weights
@@ -130,7 +133,6 @@ def main():
     best_val_loss = 1000 # should be large at start
 
     val_loss_history = deque(maxlen=PATIENCE+1)
-
     for epoch in range(TRAIN_EPOCHS):
         for image_data, target in trainset:
             results = train_step(image_data, target)
