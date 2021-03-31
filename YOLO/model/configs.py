@@ -36,12 +36,13 @@ TRAIN_ANNOT_PATH            = r"C:\Users\Asus\Desktop\OIDv4_ToolKit\Data Train.t
 TRAIN_LOGDIR                = "/content/drive/MyDrive/log"
 TRAIN_CHECKPOINTS_FOLDER    = "checkpoints"
 TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
+# TRAIN_MODEL_NAME            = f""
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
-TRAIN_BATCH_SIZE            = 1
+TRAIN_BATCH_SIZE            = 4
 TRAIN_INPUT_SIZE            = 416
 TRAIN_DATA_AUG              = True
 TRAIN_TRANSFER              = True
-TRAIN_FROM_CHECKPOINT       = False # "checkpoints/yolov3_custom"
+TRAIN_FROM_CHECKPOINT       = True # "checkpoints/yolov3_custom"
 TRAIN_LR_INIT               = 1e-4
 TRAIN_LR_END                = 1e-6
 TRAIN_WARMUP_EPOCHS         = 2
@@ -50,7 +51,7 @@ TRAIN_EPOCHS                = 5
 
 # TEST options
 TEST_ANNOT_PATH             = "C:\\Users\\Asus\\Desktop\\OIDv4_ToolKit\\Data Test.txt"
-TEST_BATCH_SIZE             = 1
+TEST_BATCH_SIZE             = 4
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False
 TEST_DECTECTED_IMAGE_PATH   = ""

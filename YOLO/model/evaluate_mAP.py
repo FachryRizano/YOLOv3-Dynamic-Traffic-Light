@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -66,7 +66,7 @@ def voc_ap(rec, prec):
     return ap, mrec, mpre
 
 
-def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=0.50, TEST_INPUT_SIZE=TEST_INPUT_SIZE):
+def get_mAP(Yolo, dataset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SIZE=TEST_INPUT_SIZE):
     MINOVERLAP = 0.5 # default value (defined in the PASCAL VOC2012 challenge)
     NUM_CLASS = read_class_names(TRAIN_CLASSES)
 
@@ -284,4 +284,4 @@ if __name__ == '__main__':
         yolo = saved_model_loaded.signatures['serving_default']
 
     testset = Dataset('test', TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
-    get_mAP(yolo, testset, score_threshold=0.05, iou_threshold=0.50, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
+    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.45, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
