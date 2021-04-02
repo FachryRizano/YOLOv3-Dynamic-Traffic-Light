@@ -95,6 +95,7 @@ def main():
                 lr = TRAIN_LR_END + 0.5 * (TRAIN_LR_INIT - TRAIN_LR_END)*(
                     (1 + tf.cos((global_steps - warmup_steps) / (total_steps - warmup_steps) * np.pi)))
             optimizer.lr.assign(lr.numpy())
+
         return global_steps.numpy(), optimizer.lr.numpy(), giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(), total_loss.numpy()
 
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
@@ -137,13 +138,12 @@ def main():
         
         # writing summary data
         with writer.as_default():
-            tf.summary.scalar("lr", lr/count_train, step=global_steps)
-            tf.summary.scalar("validate_loss - train loss", total_train/count_train, step=epoch)
+            tf.summary.scalar("lr", lr/count_train, step=epoch)
+            tf.summary.scalar("train loss/total_loss", total_train/count_train, step=epoch)
             tf.summary.scalar("train_loss/giou_loss", giou_train/count_train, step=epoch)
             tf.summary.scalar("train_loss/conf_loss", conf_train/count_train, step=epoch)
             tf.summary.scalar("train_loss/prob_loss", prob_train/count_train, step=epoch)
         writer.flush()
-
         if len(testset) == 0:
             print("configure TEST options to validate model")
             yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME))
@@ -170,10 +170,9 @@ def main():
         
         mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
         
-        # writing validate summary data
+        # writing validate summary dat
         with validate_writer.as_default():
-            tf.summary.scalar(f"mAP{TEST_IOU_THRESHOLD}",mAP,step=epoch)
-            tf.summary.scalar("validate_loss - train loss", total_val/count_val, step=epoch)
+            tf.summary.scalar("validate_loss/total_val", total_val/count_val, step=epoch)
             tf.summary.scalar("validate_loss/giou_val", giou_val/count_val, step=epoch)
             tf.summary.scalar("validate_loss/conf_val", conf_val/count_val, step=epoch)
             tf.summary.scalar("validate_loss/prob_val", prob_val/count_val, step=epoch)
@@ -198,7 +197,7 @@ def main():
         
     # measure mAP of trained custom model
     try:
-        mAP_model.load_weights(save_directory + 'variables/variables/variables') # use keras weights
+        mAP_model.load_weights(save_directory + '/variables/variables') # use keras weights
         get_mAP(mAP_model, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
     except UnboundLocalError:
         print("You don't have saved model weights to measure mAP, check TRAIN_SAVE_BEST_ONLY AND TRAIN SAVE_CHECKPOINT lines in configs.py")
