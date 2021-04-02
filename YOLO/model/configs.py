@@ -34,7 +34,7 @@ TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in tr
 TRAIN_CLASSES               = r"C:\Users\Asus\Desktop\Project-Skripsi\YOLO\model_data\Real Car and Person\Data Class.txt"
 TRAIN_ANNOT_PATH            = r"/content/Data Train.txt"
 TRAIN_LOGDIR                = "/content/drive/MyDrive/log"
-TRAIN_CHECKPOINTS_FOLDER    = r"checkpoints"
+TRAIN_CHECKPOINTS_FOLDER    = r"/content/drive/MyDrive/checkpoints"
 # TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
 TRAIN_MODEL_NAME            = f"variables"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
@@ -46,7 +46,7 @@ TRAIN_FROM_CHECKPOINT       = True # "checkpoints/yolov3_custom"
 TRAIN_LR_INIT               = 1e-4
 TRAIN_LR_END                = 1e-6
 TRAIN_WARMUP_EPOCHS         = 2
-TRAIN_EPOCHS                = 5
+TRAIN_EPOCHS                = 100
 
 
 # TEST options
