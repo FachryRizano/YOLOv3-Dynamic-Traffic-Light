@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, Input, LeakyReLU, ZeroPadding2D, BatchNormalization, MaxPool2D,Dropout
 from tensorflow.keras.regularizers import l2
 from model.utils import *
+from model.configs import DROPOUT_LAYER
 STRIDES         = np.array(YOLO_STRIDES)
 ANCHORS         = (np.array(YOLO_ANCHORS).T/STRIDES).T
 
@@ -26,7 +27,7 @@ def read_class_names(class_file_name):
             names[ID] = name.strip('\n')
     return names
 
-def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True):#do=True):
+def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True, do=DROPOUT_LAYER):
     if downsample:
         input_layer = ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
         padding = 'valid'
@@ -43,9 +44,9 @@ def convolutional(input_layer, filters_shape, downsample=False, activate=True, b
         conv = BatchNormalization()(conv)
     if activate:
         conv = LeakyReLU(alpha=0.1)(conv)
-    #Dropout
-    # if do:
-    #     conv = Dropout(0.33)(conv)
+    # Dropout
+    if do:
+        conv = Dropout(0.33)(conv)
 
 
     return conv

@@ -263,6 +263,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SI
         print(text)
         
         return mAP*100
+    
 
 if __name__ == '__main__':       
     if YOLO_FRAMEWORK == "tf": # TensorFlow detection
@@ -284,4 +285,4 @@ if __name__ == '__main__':
         yolo = saved_model_loaded.signatures['serving_default']
 
     testset = Dataset('test', TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
-    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.45, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
+    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)

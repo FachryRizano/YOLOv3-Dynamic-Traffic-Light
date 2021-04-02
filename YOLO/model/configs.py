@@ -23,10 +23,10 @@ if YOLO_TYPE                == "yolov3":
                                [[116, 90], [156, 198], [373, 326]]]
 
 #EarlyStopping
-EARLY_STOPPING              = False
-DROPOUT_LAYER               = False
-PATIENCE                    = 12
-DELTA                       = 0.1
+EARLY_STOPPING              = True
+DROPOUT_LAYER               = True
+PATIENCE                    = 46
+DELTA                       = 0.0001
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
@@ -34,7 +34,7 @@ TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in tr
 TRAIN_CLASSES               = r"C:\Users\Asus\Desktop\Project-Skripsi\YOLO\model_data\Real Car and Person\Data Class.txt"
 TRAIN_ANNOT_PATH            = r"/content/Data Train.txt"
 TRAIN_LOGDIR                = "/content/drive/MyDrive/log"
-TRAIN_CHECKPOINTS_FOLDER    = r"/content/drive/MyDrive/checkpoints"
+TRAIN_CHECKPOINTS_FOLDER    = r"checkpoints"
 # TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
 TRAIN_MODEL_NAME            = f"variables"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM

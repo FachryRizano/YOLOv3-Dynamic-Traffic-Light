@@ -49,7 +49,7 @@ def main():
     yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, training=True, CLASSES=TRAIN_CLASSES)
     if TRAIN_FROM_CHECKPOINT:
         try:
-            yolo.load_weights(f"./{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}")
+            yolo.load_weights(f"{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}")
         except ValueError:
             print("Shapes are incompatible, transfering Darknet weights")
             TRAIN_FROM_CHECKPOINT = False
@@ -95,20 +95,9 @@ def main():
                 lr = TRAIN_LR_END + 0.5 * (TRAIN_LR_INIT - TRAIN_LR_END)*(
                     (1 + tf.cos((global_steps - warmup_steps) / (total_steps - warmup_steps) * np.pi)))
             optimizer.lr.assign(lr.numpy())
-
-            # writing summary data
-            with writer.as_default():
-                tf.summary.scalar("lr", optimizer.lr, step=global_steps)
-                tf.summary.scalar("loss/total_loss", total_loss, step=global_steps)
-                tf.summary.scalar("loss/giou_loss", giou_loss, step=global_steps)
-                tf.summary.scalar("loss/conf_loss", conf_loss, step=global_steps)
-                tf.summary.scalar("loss/prob_loss", prob_loss, step=global_steps)
-            writer.flush()
-            
         return global_steps.numpy(), optimizer.lr.numpy(), giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(), total_loss.numpy()
 
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
-    
     
     def validate_step(image_data, target):
         with tf.GradientTape() as tape:
@@ -134,22 +123,36 @@ def main():
 
     val_loss_history = deque(maxlen=PATIENCE+1)
     for epoch in range(TRAIN_EPOCHS):
+        count_train, giou_train, conf_train, prob_train, total_train, lr= 0., 0, 0, 0, 0, 0
         for image_data, target in trainset:
             results = train_step(image_data, target)
-            cur_step = results[0]%steps_per_epoch
-            print("epoch:{:2.0f} step:{:5.0f}/{}, lr:{:.6f}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
-                  .format(epoch, cur_step, steps_per_epoch, results[1], results[2], results[3], results[4], results[5]))
-             #check every 20 epochs and stop if gen_valid_loss doesn't change by 10%
+            count_train += 1
+            lr += results[1]
+            giou_train += results[2]
+            conf_train += results[3]
+            prob_train += results[4]
+            total_train += results[5]
+            print("epoch:{:2.0f} lr:{:.6f}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
+                  .format(epoch, results[1], results[2], results[3], results[4], results[5]))
+        
+        # writing summary data
+        with writer.as_default():
+            tf.summary.scalar("lr", lr/count_train, step=global_steps)
+            tf.summary.scalar("validate_loss - train loss", total_train/count_train, step=epoch)
+            tf.summary.scalar("train_loss/giou_loss", giou_train/count_train, step=epoch)
+            tf.summary.scalar("train_loss/conf_loss", conf_train/count_train, step=epoch)
+            tf.summary.scalar("train_loss/prob_loss", prob_train/count_train, step=epoch)
+        writer.flush()
 
         if len(testset) == 0:
             print("configure TEST options to validate model")
             yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME))
             continue
         
-        count, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
+        count_val, giou_val, conf_val, prob_val, total_val = 0., 0, 0, 0, 0
         for image_data, target in testset:
             results = validate_step(image_data, target)
-            count += 1
+            count_val+= 1
             giou_val += results[0]
             conf_val += results[1]
             prob_val += results[2]
@@ -163,17 +166,21 @@ def main():
                     print(f'\nEarly stopping. No improvement of more than {PATIENCE:.5%} in '
                         f'validation loss in the last {PATIENCE} epochs.')
                     break
+                
+        
+        mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
         
         # writing validate summary data
         with validate_writer.as_default():
-            tf.summary.scalar("validate_loss/total_val", total_val/count, step=epoch)
-            tf.summary.scalar("validate_loss/giou_val", giou_val/count, step=epoch)
-            tf.summary.scalar("validate_loss/conf_val", conf_val/count, step=epoch)
-            tf.summary.scalar("validate_loss/prob_val", prob_val/count, step=epoch)
+            tf.summary.scalar(f"mAP{TEST_IOU_THRESHOLD}",mAP,step=epoch)
+            tf.summary.scalar("validate_loss - train loss", total_val/count_val, step=epoch)
+            tf.summary.scalar("validate_loss/giou_val", giou_val/count_val, step=epoch)
+            tf.summary.scalar("validate_loss/conf_val", conf_val/count_val, step=epoch)
+            tf.summary.scalar("validate_loss/prob_val", prob_val/count_val, step=epoch)
         validate_writer.flush()
-            
+        
         print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
-              format(giou_val/count, conf_val/count, prob_val/count, total_val/count))
+              format(giou_val/count_val, conf_val/count_val, prob_val/count_val, total_val/count_val))
 
         
 
