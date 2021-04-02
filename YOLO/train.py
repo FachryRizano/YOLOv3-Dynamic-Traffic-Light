@@ -1,8 +1,8 @@
 import os
 from tensorflow import keras as K
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'false'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 from tensorflow.python.client import device_lib
 print(device_lib.list_local_devices())
 import shutil
@@ -191,7 +191,7 @@ def main():
         
     # measure mAP of trained custom model
     try:
-        mAP_model.load_weights(save_directory) # use keras weights
+        mAP_model.load_weights(save_directory + 'variables/variables/variables') # use keras weights
         get_mAP(mAP_model, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
     except UnboundLocalError:
         print("You don't have saved model weights to measure mAP, check TRAIN_SAVE_BEST_ONLY AND TRAIN SAVE_CHECKPOINT lines in configs.py")
