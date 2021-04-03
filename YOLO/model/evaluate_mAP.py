@@ -278,4 +278,4 @@ if __name__ == '__main__':
             yolo.load_weights(f"{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
         
     testset = Dataset('test', TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
-    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
+    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.45, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)

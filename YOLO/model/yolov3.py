@@ -27,7 +27,7 @@ def read_class_names(class_file_name):
             names[ID] = name.strip('\n')
     return names
 
-def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True, do=DROPOUT_LAYER):
+def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True, do=False):
     if downsample:
         input_layer = ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
         padding = 'valid'
@@ -65,29 +65,29 @@ def upsample(input_layer):
 
 def darknet53(input_data):
     input_data = convolutional(input_data, (3, 3,  3,  32))
-    input_data = convolutional(input_data, (3, 3, 32,  64), downsample=True)
+    input_data = convolutional(input_data, (3, 3, 32,  64), downsample=True, do= DROPOUT_LAYER)
 
     for i in range(1):
         input_data = residual_block(input_data,  64,  32, 64)
 
-    input_data = convolutional(input_data, (3, 3,  64, 128), downsample=True)
+    input_data = convolutional(input_data, (3, 3,  64, 128), downsample=True, do=DROPOUT_LAYER)
 
     for i in range(2):
         input_data = residual_block(input_data, 128,  64, 128)
 
-    input_data = convolutional(input_data, (3, 3, 128, 256), downsample=True)
+    input_data = convolutional(input_data, (3, 3, 128, 256), downsample=True, do=DROPOUT_LAYER)
 
     for i in range(8):
         input_data = residual_block(input_data, 256, 128, 256)
 
     route_1 = input_data
-    input_data = convolutional(input_data, (3, 3, 256, 512), downsample=True)
+    input_data = convolutional(input_data, (3, 3, 256, 512), downsample=True,do=DROPOUT_LAYER)
 
     for i in range(8):
         input_data = residual_block(input_data, 512, 256, 512)
 
     route_2 = input_data
-    input_data = convolutional(input_data, (3, 3, 512, 1024), downsample=True)
+    input_data = convolutional(input_data, (3, 3, 512, 1024), downsample=True, do=DROPOUT_LAYER)
 
     for i in range(4):
         input_data = residual_block(input_data, 1024, 512, 1024)
