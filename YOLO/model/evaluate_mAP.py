@@ -261,8 +261,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SI
         text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP*100, fps)
         results_file.write(text + "\n")
         print(text)
-        return mAP*100
-    return mAP*100    
+        return mAP*100    
 
 if __name__ == '__main__':       
     if YOLO_FRAMEWORK == "tf": # TensorFlow detection

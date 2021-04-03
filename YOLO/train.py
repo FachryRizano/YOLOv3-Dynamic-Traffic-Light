@@ -99,7 +99,7 @@ def main():
         return global_steps.numpy(), optimizer.lr.numpy(), giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(), total_loss.numpy()
 
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
-    mAP_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
+
     def validate_step(image_data, target):
         with tf.GradientTape() as tape:
             pred_result = yolo(image_data, training=False)
@@ -165,7 +165,7 @@ def main():
             val_loss_history.append(total_val)
             if len(val_loss_history) > PATIENCE:
                 if val_loss_history.popleft()*DELTA < min(val_loss_history):
-                    print(f'\nEarly stopping. No improvement of more than {PATIENCE:.5%} in '
+                    print(f'\nEarly stopping. No improvement of more than {DELTA:.5%} in '
                         f'validation loss in the last {PATIENCE} epochs.')
                     break
                 
@@ -182,10 +182,6 @@ def main():
         
         print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
               format(giou_val/count_val, conf_val/count_val, prob_val/count_val, total_val/count_val))
-        mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
-        with mAP_writer.as_default():
-            tf.summary.scalar("mAP(Mean Average Precision)", map, step=epoch)
-        mAP_writer.flush()
         
 
         if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
@@ -202,7 +198,7 @@ def main():
         
     # measure mAP of trained custom model
     try:
-        mAP_model.load_weights(save_directory + '/variables/variables') # use keras weights
+        mAP_model.load_weights(save_directory + '/variables') # use keras weights
         get_mAP(mAP_model, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
     except UnboundLocalError:
         print("You don't have saved model weights to measure mAP, check TRAIN_SAVE_BEST_ONLY AND TRAIN SAVE_CHECKPOINT lines in configs.py")

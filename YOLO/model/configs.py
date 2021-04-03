@@ -26,7 +26,7 @@ if YOLO_TYPE                == "yolov3":
 EARLY_STOPPING              = True
 DROPOUT_LAYER               = False
 PATIENCE                    = 46
-DELTA                       = 0.0001
+DELTA                       = 0.001
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
