@@ -99,7 +99,7 @@ def main():
         return global_steps.numpy(), optimizer.lr.numpy(), giou_loss.numpy(), conf_loss.numpy(), prob_loss.numpy(), total_loss.numpy()
 
     validate_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
-    
+    mAP_writer = tf.summary.create_file_writer(TRAIN_LOGDIR)
     def validate_step(image_data, target):
         with tf.GradientTape() as tape:
             pred_result = yolo(image_data, training=False)
@@ -127,14 +127,15 @@ def main():
         count_train, giou_train, conf_train, prob_train, total_train, lr= 0., 0, 0, 0, 0, 0
         for image_data, target in trainset:
             results = train_step(image_data, target)
+            cur_step = results[0]%steps_per_epoch
             count_train += 1
             lr += results[1]
             giou_train += results[2]
             conf_train += results[3]
             prob_train += results[4]
             total_train += results[5]
-            print("epoch:{:2.0f} lr:{:.6f}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
-                  .format(epoch, results[1], results[2], results[3], results[4], results[5]))
+            print("epoch:{:2.0f} step:{:5.0f}/{}, lr:{:.6f}, giou_loss:{:7.2f}, conf_loss:{:7.2f}, prob_loss:{:7.2f}, total_loss:{:7.2f}"
+                  .format(epoch, cur_step, steps_per_epoch, results[1], results[2], results[3], results[4], results[5]))
         
         # writing summary data
         with writer.as_default():
@@ -144,6 +145,7 @@ def main():
             tf.summary.scalar("train_loss/conf_loss", conf_train/count_train, step=epoch)
             tf.summary.scalar("train_loss/prob_loss", prob_train/count_train, step=epoch)
         writer.flush()
+
         if len(testset) == 0:
             print("configure TEST options to validate model")
             yolo.save_weights(os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME))
@@ -168,7 +170,7 @@ def main():
                     break
                 
         
-        mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
+        # mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
         
         # writing validate summary dat
         with validate_writer.as_default():
@@ -180,16 +182,19 @@ def main():
         
         print("\n\ngiou_val_loss:{:7.2f}, conf_val_loss:{:7.2f}, prob_val_loss:{:7.2f}, total_val_loss:{:7.2f}\n\n".
               format(giou_val/count_val, conf_val/count_val, prob_val/count_val, total_val/count_val))
-
+        mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
+        with mAP_writer.as_default():
+            tf.summary.scalar("mAP(Mean Average Precision)", map, step=epoch)
+        mAP_writer.flush()
         
 
         if TRAIN_SAVE_CHECKPOINT and not TRAIN_SAVE_BEST_ONLY:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME+"_val_loss_{:7.2f}".format(total_val/count))
             yolo.save_weights(save_directory)
-        if TRAIN_SAVE_BEST_ONLY and best_val_loss>total_val/count:
+        if TRAIN_SAVE_BEST_ONLY and best_val_loss>total_val/count_val:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
             yolo.save(save_directory)
-            best_val_loss = total_val/count
+            best_val_loss = total_val/count_val
         if not TRAIN_SAVE_BEST_ONLY and not TRAIN_SAVE_CHECKPOINT:
             save_directory = os.path.join(TRAIN_CHECKPOINTS_FOLDER, TRAIN_MODEL_NAME)
             yolo.save_weights(save_directory)

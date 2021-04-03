@@ -24,7 +24,7 @@ if YOLO_TYPE                == "yolov3":
 
 #EarlyStopping
 EARLY_STOPPING              = True
-DROPOUT_LAYER               = True
+DROPOUT_LAYER               = False
 PATIENCE                    = 46
 DELTA                       = 0.0001
 # Train options

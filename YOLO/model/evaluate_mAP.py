@@ -261,9 +261,8 @@ def get_mAP(Yolo, dataset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SI
         text = "mAP = {:.3f}%, {:.2f} FPS".format(mAP*100, fps)
         results_file.write(text + "\n")
         print(text)
-        
         return mAP*100
-    
+    return mAP*100    
 
 if __name__ == '__main__':       
     if YOLO_FRAMEWORK == "tf": # TensorFlow detection
@@ -277,12 +276,7 @@ if __name__ == '__main__':
             load_yolo_weights(yolo, Darknet_weights) # use Darknet weights
         else:
             yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)
-            yolo.load_weights(f"./{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
+            yolo.load_weights(f"{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
         
-    elif YOLO_FRAMEWORK == "trt": # TensorRT detection
-        saved_model_loaded = tf.saved_model.load(f"./checkpoints/{TRAIN_MODEL_NAME}", tags=[tag_constants.SERVING])
-        signature_keys = list(saved_model_loaded.signatures.keys())
-        yolo = saved_model_loaded.signatures['serving_default']
-
     testset = Dataset('test', TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
     get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
