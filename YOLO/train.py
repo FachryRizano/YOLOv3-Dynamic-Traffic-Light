@@ -198,7 +198,7 @@ def main():
         
     # measure mAP of trained custom model
     try:
-        mAP_model.load_weights(save_directory + '/variables') # use keras weights
+        mAP_model.load_weights(save_directory + '/variables/variables') # use keras weights
         get_mAP(mAP_model, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
     except UnboundLocalError:
         print("You don't have saved model weights to measure mAP, check TRAIN_SAVE_BEST_ONLY AND TRAIN SAVE_CHECKPOINT lines in configs.py")
