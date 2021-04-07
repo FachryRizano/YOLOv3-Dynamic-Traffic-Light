@@ -142,6 +142,7 @@ def YOLOv3(input_layer, NUM_CLASS):
     conv_mobj_branch = convolutional(conv, (3, 3, 256, 512))
 
     # conv_mbbox is used to predict medium-sized objects, shape = [None, 26, 26, 255]
+    #Second detector
     conv_mbbox = convolutional(conv_mobj_branch, (1, 1, 512, 3*(NUM_CLASS + 5)), activate=False, bn=False)
 
     conv = convolutional(conv, (1, 1, 256, 128))
@@ -156,6 +157,7 @@ def YOLOv3(input_layer, NUM_CLASS):
     conv_sobj_branch = convolutional(conv, (3, 3, 128, 256))
     
     # conv_sbbox is used to predict small size objects, shape = [None, 52, 52, 255]
+    #Third detector
     conv_sbbox = convolutional(conv_sobj_branch, (1, 1, 256, 3*(NUM_CLASS +5)), activate=False, bn=False)
         
     return [conv_sbbox, conv_mbbox, conv_lbbox]
@@ -189,7 +191,7 @@ def Create_Yolo(input_size=416, channels=3, training=False, CLASSES=YOLO_COCO_CL
     if TRAIN_YOLO_TINY:
         conv_tensors = YOLOv3_tiny(input_layer, NUM_CLASS)
     else:
-        #isinya detectpr
+        #isinya detector
         conv_tensors = YOLOv3(input_layer, NUM_CLASS)
 
     output_tensors = []
@@ -214,13 +216,16 @@ def decode(conv_output, NUM_CLASS, i=0):
     conv_raw_conf = conv_output[:, :, :, :, 4:5] # confidence of the prediction box
     conv_raw_prob = conv_output[:, :, :, :, 5: ] # category probability of the prediction box 
 
-    # next need Draw the grid. Where output_size is equal to 13, 26 or 52  
-    y = tf.range(output_size, dtype=tf.int32)
-    y = tf.expand_dims(y, -1)
-    y = tf.tile(y, [1, output_size])
+    # next need Draw the grid. Where output_size is equal to 13, 26 or 52
+
+    
     x = tf.range(output_size,dtype=tf.int32)
     x = tf.expand_dims(x, 0)
     x = tf.tile(x, [output_size, 1])
+
+    y = tf.range(output_size, dtype=tf.int32)
+    y = tf.expand_dims(y, -1)
+    y = tf.tile(y, [1, output_size])
 
     xy_grid = tf.concat([x[:, :, tf.newaxis], y[:, :, tf.newaxis]], axis=-1)
     xy_grid = tf.tile(xy_grid[tf.newaxis, :, :, tf.newaxis, :], [batch_size, 1, 1, 3, 1])
@@ -228,6 +233,7 @@ def decode(conv_output, NUM_CLASS, i=0):
 
     # Calculate the center position of the prediction box:
     pred_xy = (tf.sigmoid(conv_raw_dxdy) + xy_grid) * STRIDES[i]
+
     # Calculate the length and width of the prediction box:
     pred_wh = (tf.exp(conv_raw_dwdh) * ANCHORS[i]) * STRIDES[i]
 
@@ -339,7 +345,7 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=YOLO_COCO_CLASSES):
     respond_bbox  = label[:, :, :, :, 4:5]
     label_prob    = label[:, :, :, :, 5:]
 
-    giou = tf.expand_dims(bbox_giou(pred_xywh, label_xywh), axis=-1)
+    giou = tf.expand_dims(bbox_ciou(pred_xywh, label_xywh), axis=-1)
     input_size = tf.cast(input_size, tf.float32)
 
     bbox_loss_scale = 2.0 - 1.0 * label_xywh[:, :, :, :, 2:3] * label_xywh[:, :, :, :, 3:4] / (input_size ** 2)

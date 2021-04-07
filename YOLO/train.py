@@ -161,6 +161,7 @@ def main():
             total_val += results[3]
         
         #Early Stopping Callbacks
+        # Stop training when a monitored metric has stopped improving.
         if EARLY_STOPPING:
             val_loss_history.append(total_val)
             if len(val_loss_history) > PATIENCE:

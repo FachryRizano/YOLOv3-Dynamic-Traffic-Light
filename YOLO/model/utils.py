@@ -156,7 +156,8 @@ def bboxes_iou(boxes1, boxes2):
     ious          = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
 
     return ious
-
+# Non Mmaximum Supression
+# untk mengambil bounding box terbaik berdasarkan IOU, karena pada dasarnya setiap detector memiliki 3 anchor
 def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
     # :param bboxes: (xmin, ymin, xmax, ymax, score, class)
 
@@ -281,7 +282,7 @@ def detect_video(Yolo, video_path, output_path, input_size=416, show=False, CLAS
         
         image = cv2.putText(image, "Time: {:.1f}FPS".format(fps), (0, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         # CreateXMLfile("XML_Detections", str(int(time.time())), original_image, bboxes, read_class_names(CLASSES))
-        
+
         print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
         if output_path != '': out.write(image)
         if show:
@@ -355,19 +356,21 @@ def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN
             original_frame = cv2.cvtColor(original_frame, cv2.COLOR_BGR2RGB)
         except:
             break
+        #resize the input image and fill the empty spot with black color
         image_data = image_preprocess(np.copy(original_frame), [input_size, input_size])
+        # we need convert image dimension (width,height,channel) -> (1,width,height,channel) / [width,height,channel]
         image_data = image_data[np.newaxis, ...].astype(np.float32)
 
         t1 = time.time()
         if YOLO_FRAMEWORK == "tf":
             pred_bbox = Yolo.predict(image_data)
-        elif YOLO_FRAMEWORK == "trt":
-            batched_input = tf.constant(image_data)
-            result = Yolo(batched_input)
-            pred_bbox = []
-            for key, value in result.items():
-                value = value.numpy()
-                pred_bbox.append(value)
+        # elif YOLO_FRAMEWORK == "trt":
+        #     batched_input = tf.constant(image_data)
+        #     result = Yolo(batched_input)
+        #     pred_bbox = []
+        #     for key, value in result.items():
+        #         value = value.numpy()
+        #         pred_bbox.append(value)
         
         t2 = time.time()
         
@@ -376,8 +379,12 @@ def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN
 
         bboxes = postprocess_boxes(pred_bbox, original_frame, input_size, score_threshold)
         bboxes = nms(bboxes, iou_threshold, method='nms')
-
-        jumlah_object = [len(bboxes)]
+        
+        #count object based on predict class
+        # number based on index in class textfile
+        car = [o for o in bboxes if o[-1]==0]
+        print(len(car))
+        
         times.append(t2-t1)
         times = times[-20:]
         
@@ -402,7 +409,7 @@ def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN
     cv2.destroyAllWindows()
 
 def Load_Yolo_model():
-    #Supooer untuk GPU
+    #Supoort for GPU
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if len(gpus) > 0:
         print(f'GPUs {gpus}')
