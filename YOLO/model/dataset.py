@@ -6,6 +6,7 @@ import tensorflow as tf
 from model.utils import read_class_names, image_preprocess
 from model.yolov3 import bbox_iou
 from model.configs import *
+from imgaug import augmenters as iaa 
 
 
 class Dataset(object):
@@ -181,6 +182,25 @@ class Dataset(object):
             bboxes[:, [1, 3]] = bboxes[:, [1, 3]] + ty
 
         return image, bboxes
+    
+    ##Augmentor with imgaug
+    aug = iaa.SomeOf(2, [    
+    iaa.Affine(scale=(0.5, 1.5)),
+    iaa.Affine(rotate=(-60, 60)),
+    iaa.Affine(translate_percent={"x":(-0.3, 0.3),"y":(-0.3, 0.3)}),
+    iaa.Fliplr(1),
+    iaa.Multiply((0.5, 1.5)),
+    iaa.GaussianBlur(sigma=(1.0, 3.0)),
+    iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
+    ])
+
+    def aug_with_imgaug(self,images, bboxes):
+        image_aug, bbs_aug = aug(image=images, bounding_boxes=bboxes)
+        #disregard bounding boxes which have fallen out of image pane    
+        bbs_aug = bbs_aug.remove_out_of_image()
+        #clip bounding boxes which are partially outside of image pane
+        bbs_aug = bbs_aug.clip_out_of_image()
+        return image_aug, bbs_aug
 
     def parse_annotation(self, annotation, mAP = 'False'):
         if TRAIN_LOAD_IMAGES_TO_RAM:
@@ -196,6 +216,7 @@ class Dataset(object):
             image, bboxes = self.random_horizontal_flip(np.copy(image), np.copy(bboxes))
             image, bboxes = self.random_crop(np.copy(image), np.copy(bboxes))
             image, bboxes = self.random_translate(np.copy(image), np.copy(bboxes))
+            image, bboxes = self.aug_with_imgaug(np.copy(image), np.copy(bboxes))
 
         #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if mAP == True: 

@@ -27,7 +27,7 @@ def read_class_names(class_file_name):
             names[ID] = name.strip('\n')
     return names
 
-def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True, do=False):
+def convolutional(input_layer, filters_shape, downsample=False, activate=True, bn=True, do=DROPOUT_LAYER):
     if downsample:
         input_layer = ZeroPadding2D(((1, 0), (1, 0)))(input_layer)
         padding = 'valid'
@@ -54,7 +54,7 @@ def convolutional(input_layer, filters_shape, downsample=False, activate=True, b
 def residual_block(input_layer, input_channel, filter_num1, filter_num2):
     short_cut = input_layer
     conv = convolutional(input_layer, filters_shape=(1, 1, input_channel, filter_num1))
-    conv = convolutional(conv       , filters_shape=(3, 3, filter_num1,   filter_num2))
+    conv = convolutional(conv, filters_shape=(3, 3, filter_num1,   filter_num2))
 
     residual_output = short_cut + conv
     return residual_output
@@ -65,23 +65,23 @@ def upsample(input_layer):
 
 def darknet53(input_data):
     input_data = convolutional(input_data, (3, 3,  3,  32))
-    input_data = convolutional(input_data, (3, 3, 32,  64), downsample=True, do= DROPOUT_LAYER)
+    input_data = convolutional(input_data, (3, 3, 32,  64), downsample=True )
 
     for i in range(1):
         input_data = residual_block(input_data,  64,  32, 64)
 
-    input_data = convolutional(input_data, (3, 3,  64, 128), downsample=True, do=DROPOUT_LAYER)
+    input_data = convolutional(input_data, (3, 3,  64, 128), downsample=True)
 
     for i in range(2):
         input_data = residual_block(input_data, 128,  64, 128)
 
-    input_data = convolutional(input_data, (3, 3, 128, 256), downsample=True, do=DROPOUT_LAYER)
+    input_data = convolutional(input_data, (3, 3, 128, 256), downsample=True)
 
     for i in range(8):
         input_data = residual_block(input_data, 256, 128, 256)
 
     route_1 = input_data
-    input_data = convolutional(input_data, (3, 3, 256, 512), downsample=True,do=DROPOUT_LAYER)
+    input_data = convolutional(input_data, (3, 3, 256, 512), downsample=True)
 
     for i in range(8):
         input_data = residual_block(input_data, 512, 256, 512)

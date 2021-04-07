@@ -275,7 +275,7 @@ if __name__ == '__main__':
             load_yolo_weights(yolo, Darknet_weights) # use Darknet weights
         else:
             yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)
-            yolo.load_weights(f"{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
+            yolo.load_weights(f"./{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
         
     testset = Dataset('test', TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
-    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.45, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)
+    get_mAP(yolo, testset, score_threshold=0.3, iou_threshold=0.5, TEST_INPUT_SIZE=YOLO_INPUT_SIZE)

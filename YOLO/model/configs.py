@@ -1,13 +1,13 @@
 YOLO_TYPE                   = "yolov3" # yolov4 or yolov3
 YOLO_FRAMEWORK              = "tf" # "tf" or "trt"
-YOLO_V3_WEIGHTS             = 'model_data/yolov3.weights'
+YOLO_V3_WEIGHTS             = '/content/yolov3.weights'
 YOLO_V4_WEIGHTS             = "model_data/yolov4.weights"
 YOLO_V3_TINY_WEIGHTS        = "/content/yolov3-tiny.weights"
 YOLO_V4_TINY_WEIGHTS        = "model_data/yolov4-tiny.weights"
 YOLO_TRT_QUANTIZE_MODE      = "INT8" # INT8, FP16, FP32
-YOLO_CUSTOM_WEIGHTS         = True # "checkpoints/yolov3_custom" # used in evaluate_mAP.py and custom model detection, if not using leave False
+YOLO_CUSTOM_WEIGHTS         = False # "checkpoints/yolov3_custom" # used in evaluate_mAP.py and custom model detection, if not using leave False
                             # YOLO_CUSTOM_WEIGHTS also used with TensorRT and custom model detection
-YOLO_COCO_CLASSES           = r"/content/YOLOv3-Dynamic-Traffic-Light/YOLO/model_data/coco/coco.names"
+YOLO_COCO_CLASSES           = r"C:\Users\Asus\Desktop\Project-Skripsi\YOLO\model_data\coco\coco.names"
 YOLO_STRIDES                = [8, 16, 32]
 YOLO_IOU_LOSS_THRESH        = 0.5
 YOLO_ANCHOR_PER_SCALE       = 3
@@ -27,22 +27,23 @@ EARLY_STOPPING              = True
 DROPOUT_LAYER               = False
 PATIENCE                    = 46
 DELTA                       = 0.001
+
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
 TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in training process (may require a lot disk space) (False recommended)
-TRAIN_CLASSES               = r"C:\Users\Asus\Desktop\Project-Skripsi\YOLO\model_data\Real Car and Person\Data Class.txt"
+TRAIN_CLASSES               = r"/content/Data Class.txt"
 TRAIN_ANNOT_PATH            = r"/content/Data Train.txt"
-TRAIN_LOGDIR                = "/content/drive/MyDrive/log"
-TRAIN_CHECKPOINTS_FOLDER    = r"checkpoints"
-# TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
-TRAIN_MODEL_NAME            = f"variables"
+TRAIN_LOGDIR                = r"/content/drive/MyDrive/log"
+TRAIN_CHECKPOINTS_FOLDER    = r"/content/drive/MyDrive/checkpoints"
+TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
+# TRAIN_MODEL_NAME            = f"variables"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
 TRAIN_BATCH_SIZE            = 4
 TRAIN_INPUT_SIZE            = 416
 TRAIN_DATA_AUG              = True
-TRAIN_TRANSFER              = False
-TRAIN_FROM_CHECKPOINT       = True # "checkpoints/yolov3_custom"
+TRAIN_TRANSFER              = True
+TRAIN_FROM_CHECKPOINT       = False # "checkpoints/yolov3_custom"
 TRAIN_LR_INIT               = 1e-4
 TRAIN_LR_END                = 1e-6
 TRAIN_WARMUP_EPOCHS         = 2
@@ -50,7 +51,7 @@ TRAIN_EPOCHS                = 100
 
 
 # TEST options
-TEST_ANNOT_PATH             = r"C:\Users\Asus\Desktop\OIDv4_ToolKit\Data Test.txt"
+TEST_ANNOT_PATH             = r"/content/Data Train.txt"
 TEST_BATCH_SIZE             = 4
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False
