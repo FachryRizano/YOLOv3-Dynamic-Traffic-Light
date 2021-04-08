@@ -7,6 +7,7 @@ from model.utils import read_class_names, image_preprocess
 from model.yolov3 import bbox_iou
 from model.configs import *
 from imgaug import augmenters as iaa 
+from imgaug.augmentables.bbs import BoundingBoxesOnImage
 
 
 class Dataset(object):
@@ -163,7 +164,7 @@ class Dataset(object):
         return image, bboxes
 
     def random_translate(self, image, bboxes):
-        if random.random() < 0.5:
+        if random.random() > 0:
             h, w, _ = image.shape
             max_bbox = np.concatenate([np.min(bboxes[:, 0:2], axis=0), np.max(bboxes[:, 2:4], axis=0)], axis=-1)
 
@@ -180,7 +181,6 @@ class Dataset(object):
 
             bboxes[:, [0, 2]] = bboxes[:, [0, 2]] + tx
             bboxes[:, [1, 3]] = bboxes[:, [1, 3]] + ty
-
         return image, bboxes
     
     ##Augmentor with imgaug
@@ -194,13 +194,21 @@ class Dataset(object):
     iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
     ])
 
-    def aug_with_imgaug(self,images, bboxes):
-        image_aug, bbs_aug = aug(image=images, bounding_boxes=bboxes)
+    def aug_with_imgaug(self,image, bboxes,aug = aug):
+        
+
+        bbs = BoundingBoxesOnImage.from_xyxy_array(bboxes[:,:-1], shape= image.shape)
+        image_aug, bbs_aug = aug(image=image, bounding_boxes=bbs)
         #disregard bounding boxes which have fallen out of image pane    
         bbs_aug = bbs_aug.remove_out_of_image()
+
         #clip bounding boxes which are partially outside of image pane
         bbs_aug = bbs_aug.clip_out_of_image()
-        return image_aug, bbs_aug
+        # print('bbox shape is = ',bbs_aug.to_xyxy_array().shape)
+        # print('class shape is ',bboxes[:,-1].shape)
+        bboxes = np.column_stack((bbs_aug.to_xyxy_array(),bboxes[:,-1][:bbs_aug.to_xyxy_array().shape[0],np.newaxis])).astype(int)
+        # bboxes = np.hstack((bbs_aug.to_xyxy_array(),bboxes[:,-1])).astype(int)
+        return image_aug, bboxes
 
     def parse_annotation(self, annotation, mAP = 'False'):
         if TRAIN_LOAD_IMAGES_TO_RAM:
@@ -213,12 +221,11 @@ class Dataset(object):
         bboxes = np.array([list(map(int, box.split(','))) for box in annotation[1]])
 
         if self.data_aug:
-            image, bboxes = self.random_horizontal_flip(np.copy(image), np.copy(bboxes))
-            image, bboxes = self.random_crop(np.copy(image), np.copy(bboxes))
-            image, bboxes = self.random_translate(np.copy(image), np.copy(bboxes))
+            # image, bboxes = self.random_horizontal_flip(np.copy(image), np.copy(bboxes))
+            # image, bboxes = self.random_crop(np.copy(image), np.copy(bboxes))
+            # image, bboxes = self.random_translate(np.copy(image), np.copy(bboxes))
             image, bboxes = self.aug_with_imgaug(np.copy(image), np.copy(bboxes))
-
-        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if mAP == True: 
             return image, bboxes
         
