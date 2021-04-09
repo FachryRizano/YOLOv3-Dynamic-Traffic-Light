@@ -197,17 +197,17 @@ class Dataset(object):
     def aug_with_imgaug(self,image, bboxes,aug = aug):
         if random.random() < 0.5:
             bbs = BoundingBoxesOnImage.from_xyxy_array(bboxes[:,:-1], shape= image.shape)
-            image_aug, bbs_aug = aug(image=image, bounding_boxes=bbs)
+            image, bbs = aug(image=image, bounding_boxes=bbs)
             #disregard bounding boxes which have fallen out of image pane    
-            bbs_aug = bbs_aug.remove_out_of_image()
+            bbs = bbs.remove_out_of_image()
 
             #clip bounding boxes which are partially outside of image pane
-            bbs_aug = bbs_aug.clip_out_of_image()
-            # print('bbox shape is = ',bbs_aug.to_xyxy_array().shape)
+            bbs = bbs.clip_out_of_image()
+            # print('bbox shape is = ',bboxes.to_xyxy_array().shape)
             # print('class shape is ',bboxes[:,-1].shape)
-            bboxes = np.column_stack((bbs_aug.to_xyxy_array(),bboxes[:,-1][:bbs_aug.to_xyxy_array().shape[0],np.newaxis])).astype(int)
+            bboxes = np.column_stack((bbs.to_xyxy_array(),bboxes[:,-1][:bbs.to_xyxy_array().shape[0],np.newaxis])).astype(int)
             
-        return image_aug, bboxes
+        return image, bboxes
 
     def parse_annotation(self, annotation, mAP = 'False'):
         if TRAIN_LOAD_IMAGES_TO_RAM:
