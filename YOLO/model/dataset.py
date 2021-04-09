@@ -182,16 +182,27 @@ class Dataset(object):
             bboxes[:, [0, 2]] = bboxes[:, [0, 2]] + tx
             bboxes[:, [1, 3]] = bboxes[:, [1, 3]] + ty
         return image, bboxes
-    
+
+    # https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720562.pdf
+
     ##Augmentor with imgaug
-    aug = iaa.SomeOf(2, [    
-    iaa.Affine(scale=(0.5, 1.5)),
-    iaa.Affine(rotate=(-60, 60)),
-    iaa.Affine(translate_percent={"x":(-0.3, 0.3),"y":(-0.3, 0.3)}),
-    iaa.Fliplr(1),
-    iaa.Multiply((0.5, 1.5)),
-    iaa.GaussianBlur(sigma=(1.0, 3.0)),
-    iaa.AdditiveGaussianNoise(scale=(0.03*255, 0.05*255))
+    aug = iaa.SomeOf(2, [
+    #top 3 augment technique from paper
+    iaa.pillike.Equalize(),
+    iaa.Affine(translate_percent={"y":(-1, 1)}),
+    iaa.Rotate(),
+
+    # iaa.Affine(scale=(0.5, 1.5)),
+    iaa.Sharpen(alpha=(0,1.0)),
+    iaa.Posterize(),
+    iaa.Solarize(0.5),
+    iaa.pillike.Autocontrast(0.5),
+    iaa.Affine(translate_percent={"x":(-1, 1),"y":(-1, 1)}),
+    iaa.Affine(translate_percent={"x":(-1, 1)}),
+    iaa.imgcorruptlike.Contrast(),
+    iaa.imgcorruptlike.Brightness(),
+    iaa.ShearY()
+
     ])
 
     def aug_with_imgaug(self,image, bboxes,aug = aug):
