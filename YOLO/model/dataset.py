@@ -97,12 +97,52 @@ class Dataset(object):
 
             exceptions = False
             num = 0
+            #annotation more than 1
+            #random <0.5
+
+            #ambil gambar pertama
+            #ambil gambar kedua
+            #implement fungsi mix up
+            # 
+            def mixup(image_info_1, image_info_2, ratio):
+                '''
+                    Mixup 2 image
+                    
+                    image_info_1, image_info_2: Info dict 2 image with keys = {"image", "label", "box", "difficult"}
+                    lambd: Mixup ratio
+                    
+                    Out: mix_image (Temsor), mix_boxes, mix_labels, mix_difficulties
+                '''
+                img1 = image_info_1["image"]    #Tensor
+                img2 = image_info_2["image"]    #Tensor
+                mixup_width = max(img1.shape[2], img2.shape[2])
+                mix_up_height = max(img1.shape[1], img2.shape[1])
+                
+                mix_img = torch.zeros(3, mix_up_height, mixup_width)
+                mix_img[:, :img1.shape[1], :img1.shape[2]] = img1 * lambd
+                mix_img[:, :img2.shape[1], :img2.shape[2]] += img2 * (1. - lambd)
+                
+                mix_labels = torch.cat((image_info_1["label"], image_info_2["label"]), dim= 0)
+                
+
+                mix_boxes = torch.cat((image_info_1["box"], image_info_2["box"]), dim= 0)
+                
+                return mix_img, mix_boxes, mix_labels
+                
+            curr_dict = {"image" : annotation[2], "box" : annotation[2]}
             if self.batch_count < self.num_batchs:
                 while num < self.batch_size:
                     index = self.batch_count * self.batch_size + num
                     if index >= self.num_samples: index -= self.num_samples
                     annotation = self.annotations[index]
+                    print(annotation)
+                    if num > 0:
+                        if random.random()<0.5:
+                            #annotation = [image_path,bboxes,image]
+                            prev_annotation = self.annotations[index-1]
+                            print(prev_annotation)
                     image, bboxes = self.parse_annotation(annotation)
+
                     try:
                         label_sbbox, label_mbbox, label_lbbox, sbboxes, mbboxes, lbboxes = self.preprocess_true_boxes(bboxes)
                     except IndexError:
@@ -133,55 +173,6 @@ class Dataset(object):
                 np.random.shuffle(self.annotations)
                 raise StopIteration
 
-    def random_horizontal_flip(self, image, bboxes):
-        if random.random() < 0.5:
-            _, w, _ = image.shape
-            image = image[:, ::-1, :]
-            bboxes[:, [0,2]] = w - bboxes[:, [2,0]]
-
-        return image, bboxes
-
-    def random_crop(self, image, bboxes):
-        if random.random() < 0.5:
-            h, w, _ = image.shape
-            max_bbox = np.concatenate([np.min(bboxes[:, 0:2], axis=0), np.max(bboxes[:, 2:4], axis=0)], axis=-1)
-
-            max_l_trans = max_bbox[0]
-            max_u_trans = max_bbox[1]
-            max_r_trans = w - max_bbox[2]
-            max_d_trans = h - max_bbox[3]
-
-            crop_xmin = max(0, int(max_bbox[0] - random.uniform(0, max_l_trans)))
-            crop_ymin = max(0, int(max_bbox[1] - random.uniform(0, max_u_trans)))
-            crop_xmax = max(w, int(max_bbox[2] + random.uniform(0, max_r_trans)))
-            crop_ymax = max(h, int(max_bbox[3] + random.uniform(0, max_d_trans)))
-
-            image = image[crop_ymin : crop_ymax, crop_xmin : crop_xmax]
-
-            bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - crop_xmin
-            bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - crop_ymin
-
-        return image, bboxes
-
-    def random_translate(self, image, bboxes):
-        if random.random() < 0.5:
-            h, w, _ = image.shape
-            max_bbox = np.concatenate([np.min(bboxes[:, 0:2], axis=0), np.max(bboxes[:, 2:4], axis=0)], axis=-1)
-
-            max_l_trans = max_bbox[0]
-            max_u_trans = max_bbox[1]
-            max_r_trans = w - max_bbox[2]
-            max_d_trans = h - max_bbox[3]
-
-            tx = random.uniform(-(max_l_trans - 1), (max_r_trans - 1))
-            ty = random.uniform(-(max_u_trans - 1), (max_d_trans - 1))
-
-            M = np.array([[1, 0, tx], [0, 1, ty]])
-            image = cv2.warpAffine(image, M, (w, h))
-
-            bboxes[:, [0, 2]] = bboxes[:, [0, 2]] + tx
-            bboxes[:, [1, 3]] = bboxes[:, [1, 3]] + ty
-        return image, bboxes
 
     # https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123720562.pdf
 
@@ -214,13 +205,12 @@ class Dataset(object):
 
             #clip bounding boxes which are partially outside of image pane
             bbs = bbs.clip_out_of_image()
-            # print('bbox shape is = ',bboxes.to_xyxy_array().shape)
-            # print('class shape is ',bboxes[:,-1].shape)
             bboxes = np.column_stack((bbs.to_xyxy_array(),bboxes[:,-1][:bbs.to_xyxy_array().shape[0],np.newaxis])).astype(int)
             
         return image, bboxes
-
+    
     def parse_annotation(self, annotation, mAP = 'False'):
+        
         if TRAIN_LOAD_IMAGES_TO_RAM:
             image_path = annotation[0]
             image = annotation[2]
@@ -231,9 +221,6 @@ class Dataset(object):
         bboxes = np.array([list(map(int, box.split(','))) for box in annotation[1]])
 
         if self.data_aug:
-            image, bboxes = self.random_horizontal_flip(np.copy(image), np.copy(bboxes))
-            image, bboxes = self.random_crop(np.copy(image), np.copy(bboxes))
-            image, bboxes = self.random_translate(np.copy(image), np.copy(bboxes))
             image, bboxes = self.aug_with_imgaug(np.copy(image), np.copy(bboxes))
             # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if mAP == True: 
