@@ -104,7 +104,7 @@ class Dataset(object):
             #ambil gambar kedua
             #implement fungsi mix up
             # 
-            def mixup(image_info_1, image_info_2, ratio):
+            def mixup(image1, bboxes1, image2, bboxes2, ratio):
                 '''
                     Mixup 2 image
                     
@@ -113,36 +113,38 @@ class Dataset(object):
                     
                     Out: mix_image (Temsor), mix_boxes, mix_labels, mix_difficulties
                 '''
-                img1 = image_info_1["image"]    #Tensor
-                img2 = image_info_2["image"]    #Tensor
-                mixup_width = max(img1.shape[2], img2.shape[2])
-                mix_up_height = max(img1.shape[1], img2.shape[1])
+                mixup_width = max(image1.shape[1], image2.shape[1])
+                mix_up_height = max(imgage1.shape[0], img2.shape[0])
                 
-                mix_img = torch.zeros(3, mix_up_height, mixup_width)
-                mix_img[:, :img1.shape[1], :img1.shape[2]] = img1 * lambd
-                mix_img[:, :img2.shape[1], :img2.shape[2]] += img2 * (1. - lambd)
+                mix_img = np.zeros(3, mix_up_height, mixup_width)
+                mix_img[:, :img1.shape[0], :img1.shape[1]] = img1 * ratio
+                mix_img[:, :img2.shape[0], :img2.shape[1]] += img2 * (1. - ratio)
+            
+                mix_boxes = np.concatenate((bboxes1,bboxes2), axis= 0)
                 
-                mix_labels = torch.cat((image_info_1["label"], image_info_2["label"]), dim= 0)
+                return mix_img, mix_boxes
                 
-
-                mix_boxes = torch.cat((image_info_1["box"], image_info_2["box"]), dim= 0)
-                
-                return mix_img, mix_boxes, mix_labels
-                
-            curr_dict = {"image" : annotation[2], "box" : annotation[2]}
+            # curr_dict = {"image" : annotation[2], "box" : annotation[2]}
             if self.batch_count < self.num_batchs:
                 while num < self.batch_size:
                     index = self.batch_count * self.batch_size + num
                     if index >= self.num_samples: index -= self.num_samples
                     annotation = self.annotations[index]
-                    print(annotation)
-                    if num > 0:
-                        if random.random()<0.5:
-                            #annotation = [image_path,bboxes,image]
-                            prev_annotation = self.annotations[index-1]
-                            print(prev_annotation)
                     image, bboxes = self.parse_annotation(annotation)
-
+                    print('image and bboxes')
+                    print(image.shape, bboxes)
+                    if MIX_UP:
+                        if num > 0:
+                            #apply mixup function here with 50% chance
+                            if random.random()<0.5:
+                                #annotation = [image_path,bboxes,image]
+                                prev_annotation = self.annotations[index-1]
+                                prev_image, prev_bboxes = self.parse_annotation(prev_annotation, only_parse=True)
+                                print("this previous images and bbox")
+                                print(prev_image.shape)
+                                print(prev_bboxes)
+                                image, bboxes = mixup(image, bboxes, prev_image, prev_bboxes)
+                                print(cv2.imshow(image))
                     try:
                         label_sbbox, label_mbbox, label_lbbox, sbboxes, mbboxes, lbboxes = self.preprocess_true_boxes(bboxes)
                     except IndexError:
@@ -209,7 +211,7 @@ class Dataset(object):
             
         return image, bboxes
     
-    def parse_annotation(self, annotation, mAP = 'False'):
+    def parse_annotation(self, annotation, mAP = 'False', only_parse= False):
         
         if TRAIN_LOAD_IMAGES_TO_RAM:
             image_path = annotation[0]
@@ -219,10 +221,10 @@ class Dataset(object):
             image = cv2.imread(image_path)
             
         bboxes = np.array([list(map(int, box.split(','))) for box in annotation[1]])
-
-        if self.data_aug:
-            image, bboxes = self.aug_with_imgaug(np.copy(image), np.copy(bboxes))
-            # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if not only_parse:
+          if self.data_aug:
+              image, bboxes = self.aug_with_imgaug(np.copy(image), np.copy(bboxes))
+              # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if mAP == True: 
             return image, bboxes
         

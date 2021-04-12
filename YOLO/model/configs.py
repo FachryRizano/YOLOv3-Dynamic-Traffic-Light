@@ -28,6 +28,9 @@ DROPOUT_LAYER               = False
 PATIENCE                    = 46
 DELTA                       = 0.001
 
+#Mix up
+MIX_UP                      = True
+
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
@@ -39,7 +42,7 @@ TRAIN_CHECKPOINTS_FOLDER    = r"checkpoints"
 # TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
 TRAIN_MODEL_NAME            = f"variables"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
-TRAIN_BATCH_SIZE            = 4
+TRAIN_BATCH_SIZE            = 2
 TRAIN_INPUT_SIZE            = 416
 TRAIN_DATA_AUG              = True
 TRAIN_TRANSFER              = False
@@ -51,8 +54,8 @@ TRAIN_EPOCHS                = 100
 
 
 # TEST options
-TEST_ANNOT_PATH             = r"/content/Data Test.txt"
-TEST_BATCH_SIZE             = 4
+TEST_ANNOT_PATH             = r"C:\Users\Asus\Desktop\OIDv4_ToolKit\Data Test.txt"
+TEST_BATCH_SIZE             = 2
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False
 TEST_DECTECTED_IMAGE_PATH   = ""
