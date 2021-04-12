@@ -30,15 +30,16 @@ DELTA                       = 0.001
 
 #Mix up
 MIX_UP                      = True
+MIX_UP_THRESHOLD            = 0.4
 
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
 TRAIN_SAVE_CHECKPOINT       = False # saves all best validated checkpoints in training process (may require a lot disk space) (False recommended)
-TRAIN_CLASSES               = r"C:\Users\Asus\Desktop\Project-Skripsi\YOLO\model_data\Real Car and Person\Data Class.txt"
+TRAIN_CLASSES               = r"/content/Data Class.txt"
 TRAIN_ANNOT_PATH            = r"/content/Data Train.txt"
 TRAIN_LOGDIR                = r"/content/drive/MyDrive/log"
-TRAIN_CHECKPOINTS_FOLDER    = r"checkpoints"
+TRAIN_CHECKPOINTS_FOLDER    = r"/content/drive/MyDrive/checkpoints"
 # TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
 TRAIN_MODEL_NAME            = f"variables"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
@@ -54,7 +55,7 @@ TRAIN_EPOCHS                = 100
 
 
 # TEST options
-TEST_ANNOT_PATH             = r"C:\Users\Asus\Desktop\OIDv4_ToolKit\Data Test.txt"
+TEST_ANNOT_PATH             = r"/content/Data Train.txt"
 TEST_BATCH_SIZE             = 2
 TEST_INPUT_SIZE             = 416
 TEST_DATA_AUG               = False
