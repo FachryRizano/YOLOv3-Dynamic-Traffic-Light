@@ -10,6 +10,8 @@ from imgaug import augmenters as iaa
 from imgaug.augmentables.bbs import BoundingBoxesOnImage
 
 
+
+
 class Dataset(object):
     # Dataset preprocess implementation
     def __init__(self, dataset_type, TEST_INPUT_SIZE=TEST_INPUT_SIZE):
@@ -114,11 +116,11 @@ class Dataset(object):
                     Out: mix_image (Temsor), mix_boxes, mix_labels, mix_difficulties
                 '''
                 mixup_width = max(image1.shape[1], image2.shape[1])
-                mix_up_height = max(imgage1.shape[0], img2.shape[0])
+                mix_up_height = max(image1.shape[0], image2.shape[0])
                 
-                mix_img = np.zeros(3, mix_up_height, mixup_width)
-                mix_img[:, :img1.shape[0], :img1.shape[1]] = img1 * ratio
-                mix_img[:, :img2.shape[0], :img2.shape[1]] += img2 * (1. - ratio)
+                mix_img = np.zeros((mix_up_height, mixup_width,3),dtype=float)
+                mix_img[:, :image1.shape[0], :image1.shape[1]] = image1 * ratio
+                mix_img[:, :image2.shape[0], :image2.shape[1]] += image2 * (1. - ratio)
             
                 mix_boxes = np.concatenate((bboxes1,bboxes2), axis= 0)
                 
@@ -131,8 +133,6 @@ class Dataset(object):
                     if index >= self.num_samples: index -= self.num_samples
                     annotation = self.annotations[index]
                     image, bboxes = self.parse_annotation(annotation)
-                    print('image and bboxes')
-                    print(image.shape, bboxes)
                     if MIX_UP:
                         if num > 0:
                             #apply mixup function here with 50% chance
@@ -140,11 +140,9 @@ class Dataset(object):
                                 #annotation = [image_path,bboxes,image]
                                 prev_annotation = self.annotations[index-1]
                                 prev_image, prev_bboxes = self.parse_annotation(prev_annotation, only_parse=True)
-                                print("this previous images and bbox")
-                                print(prev_image.shape)
-                                print(prev_bboxes)
-                                image, bboxes = mixup(image, bboxes, prev_image, prev_bboxes)
-                                print(cv2.imshow(image))
+                                image, bboxes = mixup(image, bboxes, prev_image, prev_bboxes, 0.4)
+                                # image = cv2.cvtColor(image.astype('float32'),cv2.COLOR_BGR2RGB)
+                                
                     try:
                         label_sbbox, label_mbbox, label_lbbox, sbboxes, mbboxes, lbboxes = self.preprocess_true_boxes(bboxes)
                     except IndexError:
