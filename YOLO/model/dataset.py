@@ -105,7 +105,7 @@ class Dataset(object):
             #ambil gambar kedua
             #implement fungsi mix up
             # 
-            def mixup(image1, bboxes1, image2, bboxes2, ratio):
+            def mixup(image1, bboxes1, image2, bboxes2, ratio=MIX_UP_THRESHOLD):
                 '''
                     Mixup 2 image
                     
@@ -139,7 +139,7 @@ class Dataset(object):
                                 #annotation = [image_path,bboxes,image]
                                 prev_annotation = self.annotations[index-1]
                                 prev_image, prev_bboxes = self.parse_annotation(prev_annotation, only_parse=True)
-                                image, bboxes = mixup(image, bboxes, prev_image, prev_bboxes, 0.4)
+                                image, bboxes = mixup(image, bboxes, prev_image, prev_bboxes)
                                 # image = cv2.cvtColor(image.astype('float32'),cv2.COLOR_BGR2RGB)
                                 
                     try:
