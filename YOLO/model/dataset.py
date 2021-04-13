@@ -11,7 +11,6 @@ from imgaug.augmentables.bbs import BoundingBoxesOnImage
 
 
 
-
 class Dataset(object):
     # Dataset preprocess implementation
     def __init__(self, dataset_type, TEST_INPUT_SIZE=TEST_INPUT_SIZE):

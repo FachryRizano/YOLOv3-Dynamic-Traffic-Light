@@ -30,6 +30,7 @@ DELTA                       = 0.001
 
 #Mix up
 MIX_UP                      = True
+MIX_UP_THRESHOLD            = 0.4
 
 # Train options
 TRAIN_YOLO_TINY             = False
