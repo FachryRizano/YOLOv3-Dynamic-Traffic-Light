@@ -120,9 +120,8 @@ def main():
 
     mAP_model = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES) # create second model to measure mAP
 
-    best_val_loss = 1000 # should be large at start
+    best_val_loss = 10000 # should be large at start
 
-    val_loss_history = deque(maxlen=PATIENCE+1)
     for epoch in range(TRAIN_EPOCHS):
         count_train, giou_train, conf_train, prob_train, total_train, lr= 0., 0, 0, 0, 0, 0
         for image_data, target in trainset:
@@ -160,15 +159,6 @@ def main():
             prob_val += results[2]
             total_val += results[3]
         
-        #Early Stopping Callbacks
-        # Stop training when a monitored metric has stopped improving.
-        if EARLY_STOPPING:
-            val_loss_history.append(total_val)
-            if len(val_loss_history) > PATIENCE:
-                if val_loss_history.popleft()*DELTA < min(val_loss_history):
-                    print(f'\nEarly stopping. No improvement of more than {DELTA:.5%} in '
-                        f'validation loss in the last {PATIENCE} epochs.')
-                    break
                 
         
         # mAP = get_mAP(yolo, testset, score_threshold=TEST_SCORE_THRESHOLD, iou_threshold=TEST_IOU_THRESHOLD)
