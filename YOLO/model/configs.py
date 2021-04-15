@@ -21,13 +21,6 @@ if YOLO_TYPE                == "yolov3":
     YOLO_ANCHORS            = [[[10,  13], [16,   30], [33,   23]],
                                [[30,  61], [62,   45], [59,  119]],
                                [[116, 90], [156, 198], [373, 326]]]
-
-#EarlyStopping
-EARLY_STOPPING              = True
-DROPOUT_LAYER               = False
-PATIENCE                    = 46
-DELTA                       = 0.001
-
 #Mix up
 MIX_UP                      = True
 MIX_UP_THRESHOLD            = 0.4
