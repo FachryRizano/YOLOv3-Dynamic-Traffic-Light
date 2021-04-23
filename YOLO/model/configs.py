@@ -25,6 +25,8 @@ if YOLO_TYPE                == "yolov3":
 MIX_UP                      = True
 MIX_UP_THRESHOLD            = 0.4
 
+DROPOUT_LAYER               = False
+
 # Train options
 TRAIN_YOLO_TINY             = False
 TRAIN_SAVE_BEST_ONLY        = True # saves only best model according validation loss (True recommended)
