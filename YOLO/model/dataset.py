@@ -138,7 +138,7 @@ class Dataset(object):
                             if random.random()<0.5:
                                 #annotation = [image_path,bboxes,image]
                                 select_index_prev = int(random.randint(0,index))
-                                select_index_prev = select_index_prev if select_index_prev != index else-1
+                                select_index_prev = select_index_prev if select_index_prev != index else index-1
                                 prev_annotation = self.annotations[select_index_prev]
                                 prev_image, prev_bboxes = self.parse_annotation(prev_annotation, only_parse=True)
                                 image, bboxes = mixup(image, bboxes, prev_image, prev_bboxes)
