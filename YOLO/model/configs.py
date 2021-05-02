@@ -22,7 +22,7 @@ if YOLO_TYPE                == "yolov3":
                                [[30,  61], [62,   45], [59,  119]],
                                [[116, 90], [156, 198], [373, 326]]]
 #Mix up
-MIX_UP                      = True
+MIX_UP                      = False
 MIX_UP_THRESHOLD            = 0.4
 
 DROPOUT_LAYER               = False
@@ -40,7 +40,7 @@ TRAIN_MODEL_NAME            = f"{YOLO_TYPE}_custom"
 TRAIN_LOAD_IMAGES_TO_RAM    = True # With True faster training, but need more RAM
 TRAIN_BATCH_SIZE            = 8
 TRAIN_INPUT_SIZE            = 416
-TRAIN_DATA_AUG              = True
+TRAIN_DATA_AUG              = False
 TRAIN_TRANSFER              = True
 TRAIN_FROM_CHECKPOINT       = False # "checkpoints/yolov3_custom"
 TRAIN_LR_INIT               = 1e-4
