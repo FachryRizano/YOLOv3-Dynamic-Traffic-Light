@@ -114,12 +114,14 @@ class Dataset(object):
                     
                     Out: mix_image (Temsor), mix_boxes, mix_labels, mix_difficulties
                 '''
+                l = np.random.beta(alpha,alpha)
+                
                 mixup_width = max(image1.shape[1], image2.shape[1])
                 mix_up_height = max(image1.shape[0], image2.shape[0])
                 
                 mix_img = np.zeros((mix_up_height, mixup_width,3),dtype=float)
-                mix_img[:, :image1.shape[0], :image1.shape[1]] = image1 * ratio
-                mix_img[:, :image2.shape[0], :image2.shape[1]] += image2 * (1. - ratio)
+                mix_img[:, :image1.shape[0], :image1.shape[1]] = image1 * l
+                mix_img[:, :image2.shape[0], :image2.shape[1]] += image2 * (1. - l)
             
                 mix_boxes = np.concatenate((bboxes1,bboxes2), axis= 0)
                 
