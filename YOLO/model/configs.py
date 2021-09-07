@@ -46,7 +46,7 @@ TRAIN_FROM_CHECKPOINT       = False # "checkpoints/yolov3_custom"
 TRAIN_LR_INIT               = 1e-4
 TRAIN_LR_END                = 1e-6
 TRAIN_WARMUP_EPOCHS         = 2
-TRAIN_EPOCHS                = 100
+TRAIN_EPOCHS                = 114
 
 
 # TEST options
