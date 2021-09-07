@@ -1,7 +1,13 @@
-#ini dari utils
-#detect realtime
-#Load_Yolo_Model
-
+#================================================================
+#
+#   File name   : utils.py
+#   Author      : PyLessons
+#   Created date: 2020-09-27
+#   Website     : https://pylessons.com/
+#   GitHub      : https://github.com/pythonlessons/TensorFlow-2.x-YOLOv3
+#   Description : additional yolov3 and yolov4 functions
+#
+#================================================================
 from multiprocessing import Process, Queue, Pipe
 import cv2
 import time
@@ -9,17 +15,10 @@ import random
 import colorsys
 import numpy as np
 import tensorflow as tf
-from model.configs import *
-from model.yolov3 import *
+from yolov3.configs import *
+from yolov3.yolov4 import *
+from tensorflow.python.saved_model import tag_constants
 import urllib
-
-def read_class_names(class_file_name):
-    # loads class name from a file
-    names = {}
-    with open(class_file_name, 'r') as data:
-        for ID, name in enumerate(data):
-            names[ID] = name.strip('\n')
-    return names
 
 def load_yolo_weights(model, weights_file):
     tf.keras.backend.clear_session() # used to reset layer names
@@ -27,6 +26,9 @@ def load_yolo_weights(model, weights_file):
     if YOLO_TYPE == "yolov3":
         range1 = 75 if not TRAIN_YOLO_TINY else 13
         range2 = [58, 66, 74] if not TRAIN_YOLO_TINY else [9, 12]
+    if YOLO_TYPE == "yolov4":
+        range1 = 110 if not TRAIN_YOLO_TINY else 21
+        range2 = [93, 101, 109] if not TRAIN_YOLO_TINY else [17, 20]
     
     with open(weights_file, 'rb') as wf:
         major, minor, revision, seen, _ = np.fromfile(wf, dtype=np.int32, count=5)
@@ -71,6 +73,38 @@ def load_yolo_weights(model, weights_file):
                 conv_layer.set_weights([conv_weights, conv_bias])
 
         assert len(wf.read()) == 0, 'failed to read all data'
+
+def Load_Yolo_model():
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if len(gpus) > 0:
+        print(f'GPUs {gpus}')
+        try: tf.config.experimental.set_memory_growth(gpus[0], True)
+        except RuntimeError: pass
+        
+    if YOLO_FRAMEWORK == "tf": # TensorFlow detection
+        if YOLO_TYPE == "yolov4":
+            Darknet_weights = YOLO_V4_TINY_WEIGHTS if TRAIN_YOLO_TINY else YOLO_V4_WEIGHTS
+        if YOLO_TYPE == "yolov3":
+            Darknet_weights = YOLO_V3_TINY_WEIGHTS if TRAIN_YOLO_TINY else YOLO_V3_WEIGHTS
+            
+        if YOLO_CUSTOM_WEIGHTS == False:
+            print("Loading Darknet_weights from:", Darknet_weights)
+            yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=YOLO_COCO_CLASSES)
+            load_yolo_weights(yolo, Darknet_weights) # use Darknet weights
+        else:
+            checkpoint = f"./checkpoints/{TRAIN_MODEL_NAME}"
+            if TRAIN_YOLO_TINY:
+                checkpoint += "_Tiny"
+            print("Loading custom weights from:", checkpoint)
+            yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)
+            yolo.load_weights(checkpoint)  # use custom weights
+        
+    elif YOLO_FRAMEWORK == "trt": # TensorRT detection
+        saved_model_loaded = tf.saved_model.load(YOLO_CUSTOM_WEIGHTS, tags=[tag_constants.SERVING])
+        signature_keys = list(saved_model_loaded.signatures.keys())
+        yolo = saved_model_loaded.signatures['serving_default']
+
+    return yolo
 
 def image_preprocess(image, target_size, gt_boxes=None):
     ih, iw    = target_size
@@ -127,7 +161,7 @@ def draw_bbox(image, bboxes, CLASSES=YOLO_COCO_CLASSES, show_label=True, show_co
             if tracking: score_str = " "+str(score)
 
             label = "{}".format(NUM_CLASS[class_ind]) + score_str
-
+            
             # get text size
             (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_COMPLEX_SMALL,
                                                                   fontScale, thickness=bbox_thick)
@@ -139,6 +173,7 @@ def draw_bbox(image, bboxes, CLASSES=YOLO_COCO_CLASSES, show_label=True, show_co
                         fontScale, Text_colors, bbox_thick, lineType=cv2.LINE_AA)
 
     return image
+
 
 def bboxes_iou(boxes1, boxes2):
     boxes1 = np.array(boxes1)
@@ -156,11 +191,15 @@ def bboxes_iou(boxes1, boxes2):
     ious          = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
 
     return ious
-# Non Mmaximum Supression
-# untk mengambil bounding box terbaik berdasarkan IOU, karena pada dasarnya setiap detector memiliki 3 anchor
-def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
-    # :param bboxes: (xmin, ymin, xmax, ymax, score, class)
 
+
+def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
+    """
+    :param bboxes: (xmin, ymin, xmax, ymax, score, class)
+
+    Note: soft-nms, https://arxiv.org/pdf/1704.04503.pdf
+          https://github.com/bharatsingh430/soft-nms
+    """
     classes_in_img = list(set(bboxes[:, 5]))
     best_bboxes = []
 
@@ -194,7 +233,49 @@ def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
 
     return best_bboxes
 
-def detect_image(Yolo, image_path, output_path, input_size=416, show=False, CLASSES=TRAIN_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
+
+def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
+    valid_scale=[0, np.inf]
+    pred_bbox = np.array(pred_bbox)
+
+    pred_xywh = pred_bbox[:, 0:4]
+    pred_conf = pred_bbox[:, 4]
+    pred_prob = pred_bbox[:, 5:]
+
+    # 1. (x, y, w, h) --> (xmin, ymin, xmax, ymax)
+    pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
+                                pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
+    # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
+    org_h, org_w = original_image.shape[:2]
+    resize_ratio = min(input_size / org_w, input_size / org_h)
+
+    dw = (input_size - resize_ratio * org_w) / 2
+    dh = (input_size - resize_ratio * org_h) / 2
+
+    pred_coor[:, 0::2] = 1.0 * (pred_coor[:, 0::2] - dw) / resize_ratio
+    pred_coor[:, 1::2] = 1.0 * (pred_coor[:, 1::2] - dh) / resize_ratio
+
+    # 3. clip some boxes those are out of range
+    pred_coor = np.concatenate([np.maximum(pred_coor[:, :2], [0, 0]),
+                                np.minimum(pred_coor[:, 2:], [org_w - 1, org_h - 1])], axis=-1)
+    invalid_mask = np.logical_or((pred_coor[:, 0] > pred_coor[:, 2]), (pred_coor[:, 1] > pred_coor[:, 3]))
+    pred_coor[invalid_mask] = 0
+
+    # 4. discard some invalid boxes
+    bboxes_scale = np.sqrt(np.multiply.reduce(pred_coor[:, 2:4] - pred_coor[:, 0:2], axis=-1))
+    scale_mask = np.logical_and((valid_scale[0] < bboxes_scale), (bboxes_scale < valid_scale[1]))
+
+    # 5. discard boxes with low scores
+    classes = np.argmax(pred_prob, axis=-1)
+    scores = pred_conf * pred_prob[np.arange(len(pred_coor)), classes]
+    score_mask = scores > score_threshold
+    mask = np.logical_and(scale_mask, score_mask)
+    coors, scores, classes = pred_coor[mask], scores[mask], classes[mask]
+
+    return np.concatenate([coors, scores[:, np.newaxis], classes[:, np.newaxis]], axis=-1)
+
+
+def detect_image(Yolo, image_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
     original_image      = cv2.imread(image_path)
     original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
@@ -204,6 +285,13 @@ def detect_image(Yolo, image_path, output_path, input_size=416, show=False, CLAS
 
     if YOLO_FRAMEWORK == "tf":
         pred_bbox = Yolo.predict(image_data)
+    elif YOLO_FRAMEWORK == "trt":
+        batched_input = tf.constant(image_data)
+        result = Yolo(batched_input)
+        pred_bbox = []
+        for key, value in result.items():
+            value = value.numpy()
+            pred_bbox.append(value)
         
     pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
     pred_bbox = tf.concat(pred_bbox, axis=0)
@@ -224,6 +312,124 @@ def detect_image(Yolo, image_path, output_path, input_size=416, show=False, CLAS
         cv2.destroyAllWindows()
         
     return image
+
+def Predict_bbox_mp(Frames_data, Predicted_data, Processing_times):
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if len(gpus) > 0:
+        try: tf.config.experimental.set_memory_growth(gpus[0], True)
+        except RuntimeError: print("RuntimeError in tf.config.experimental.list_physical_devices('GPU')")
+    Yolo = Load_Yolo_model()
+    times = []
+    while True:
+        if Frames_data.qsize()>0:
+            image_data = Frames_data.get()
+            t1 = time.time()
+            Processing_times.put(time.time())
+            
+            if YOLO_FRAMEWORK == "tf":
+                pred_bbox = Yolo.predict(image_data)
+            elif YOLO_FRAMEWORK == "trt":
+                batched_input = tf.constant(image_data)
+                result = Yolo(batched_input)
+                pred_bbox = []
+                for key, value in result.items():
+                    value = value.numpy()
+                    pred_bbox.append(value)
+
+            pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
+            pred_bbox = tf.concat(pred_bbox, axis=0)
+            
+            Predicted_data.put(pred_bbox)
+
+
+def postprocess_mp(Predicted_data, original_frames, Processed_frames, Processing_times, input_size, CLASSES, score_threshold, iou_threshold, rectangle_colors, realtime):
+    times = []
+    while True:
+        if Predicted_data.qsize()>0:
+            pred_bbox = Predicted_data.get()
+            if realtime:
+                while original_frames.qsize() > 1:
+                    original_image = original_frames.get()
+            else:
+                original_image = original_frames.get()
+            
+            bboxes = postprocess_boxes(pred_bbox, original_image, input_size, score_threshold)
+            bboxes = nms(bboxes, iou_threshold, method='nms')
+            image = draw_bbox(original_image, bboxes, CLASSES=CLASSES, rectangle_colors=rectangle_colors)
+            times.append(time.time()-Processing_times.get())
+            times = times[-20:]
+            
+            ms = sum(times)/len(times)*1000
+            fps = 1000 / ms
+            image = cv2.putText(image, "Time: {:.1f}FPS".format(fps), (0, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+            #print("Time: {:.2f}ms, Final FPS: {:.1f}".format(ms, fps))
+            
+            Processed_frames.put(image)
+
+def Show_Image_mp(Processed_frames, show, Final_frames):
+    while True:
+        if Processed_frames.qsize()>0:
+            image = Processed_frames.get()
+            Final_frames.put(image)
+            if show:
+                cv2.imshow('output', image)
+                if cv2.waitKey(25) & 0xFF == ord("q"):
+                    cv2.destroyAllWindows()
+                    break
+
+# detect from webcam
+def detect_video_realtime_mp(video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', realtime=False):
+    if realtime:
+        vid = cv2.VideoCapture(0)
+    else:
+        vid = cv2.VideoCapture(video_path)
+
+    # by default VideoCapture returns float instead of int
+    width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(vid.get(cv2.CAP_PROP_FPS))
+    codec = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(output_path, codec, fps, (width, height)) # output_path must be .mp4
+    no_of_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    original_frames = Queue()
+    Frames_data = Queue()
+    Predicted_data = Queue()
+    Processed_frames = Queue()
+    Processing_times = Queue()
+    Final_frames = Queue()
+    
+    p1 = Process(target=Predict_bbox_mp, args=(Frames_data, Predicted_data, Processing_times))
+    p2 = Process(target=postprocess_mp, args=(Predicted_data, original_frames, Processed_frames, Processing_times, input_size, CLASSES, score_threshold, iou_threshold, rectangle_colors, realtime))
+    p3 = Process(target=Show_Image_mp, args=(Processed_frames, show, Final_frames))
+    p1.start()
+    p2.start()
+    p3.start()
+        
+    while True:
+        ret, img = vid.read()
+        if not ret:
+            break
+
+        original_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+        original_frames.put(original_image)
+
+        image_data = image_preprocess(np.copy(original_image), [input_size, input_size])
+        image_data = image_data[np.newaxis, ...].astype(np.float32)
+        Frames_data.put(image_data)
+        
+    while True:
+        if original_frames.qsize() == 0 and Frames_data.qsize() == 0 and Predicted_data.qsize() == 0  and Processed_frames.qsize() == 0  and Processing_times.qsize() == 0 and Final_frames.qsize() == 0:
+            p1.terminate()
+            p2.terminate()
+            p3.terminate()
+            break
+        elif Final_frames.qsize()>0:
+            image = Final_frames.get()
+            if output_path != '': out.write(image)
+
+    cv2.destroyAllWindows()
 
 def detect_video(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
     times, times_2 = [], []
@@ -282,7 +488,7 @@ def detect_video(Yolo, video_path, output_path, input_size=416, show=False, CLAS
         
         image = cv2.putText(image, "Time: {:.1f}FPS".format(fps), (0, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         # CreateXMLfile("XML_Detections", str(int(time.time())), original_image, bboxes, read_class_names(CLASSES))
-
+        
         print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
         if output_path != '': out.write(image)
         if show:
@@ -293,51 +499,24 @@ def detect_video(Yolo, video_path, output_path, input_size=416, show=False, CLAS
 
     cv2.destroyAllWindows()
 
-def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
-    valid_scale=[0, np.inf]
-    pred_bbox = np.array(pred_bbox)
+# detect from webcam
 
-    pred_xywh = pred_bbox[:, 0:4]
-    pred_conf = pred_bbox[:, 4]
-    pred_prob = pred_bbox[:, 5:]
+from firebase import firebase
 
-    # 1. (x, y, w, h) --> (xmin, ymin, xmax, ymax)
-    pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
-                                pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
-    # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-    org_h, org_w = original_image.shape[:2]
-    resize_ratio = min(input_size / org_w, input_size / org_h)
-
-    dw = (input_size - resize_ratio * org_w) / 2
-    dh = (input_size - resize_ratio * org_h) / 2
-
-    pred_coor[:, 0::2] = 1.0 * (pred_coor[:, 0::2] - dw) / resize_ratio
-    pred_coor[:, 1::2] = 1.0 * (pred_coor[:, 1::2] - dh) / resize_ratio
-
-    # 3. clip some boxes those are out of range
-    pred_coor = np.concatenate([np.maximum(pred_coor[:, :2], [0, 0]),
-                                np.minimum(pred_coor[:, 2:], [org_w - 1, org_h - 1])], axis=-1)
-    invalid_mask = np.logical_or((pred_coor[:, 0] > pred_coor[:, 2]), (pred_coor[:, 1] > pred_coor[:, 3]))
-    pred_coor[invalid_mask] = 0
-
-    # 4. discard some invalid boxes
-    bboxes_scale = np.sqrt(np.multiply.reduce(pred_coor[:, 2:4] - pred_coor[:, 0:2], axis=-1))
-    scale_mask = np.logical_and((valid_scale[0] < bboxes_scale), (bboxes_scale < valid_scale[1]))
-
-    # 5. discard boxes with low scores
-    classes = np.argmax(pred_prob, axis=-1)
-    scores = pred_conf * pred_prob[np.arange(len(pred_coor)), classes]
-    score_mask = scores > score_threshold
-    mask = np.logical_and(scale_mask, score_mask)
-    coors, scores, classes = pred_coor[mask], scores[mask], classes[mask]
-
-    return np.concatenate([coors, scores[:, np.newaxis], classes[:, np.newaxis]], axis=-1)
+fb = firebase.FirebaseApplication('https://dynamic-traffic-light-default-rtdb.firebaseio.com', None)
 
 
-def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
+def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN_CLASSES, score_threshold=0.3, iou_threshold=0.5, rectangle_colors=''):
     times = []
-    vid = cv2.VideoCapture(0)
-    # url='http://192.168.216.94/cam-hi.jpg'
+    times2= []
+    times3= []
+    times4= []
+    # vid = cv2.VideoCapture(0)
+    url ='http://192.168.0.104/cam-hi.jpg' 
+    url2= 'http://192.168.0.103/cam-hi.jpg'
+    url3 = 'http://192.168.0.102/cam-hi.jpg'
+    url4 = 'http://192.168.0.101/cam-hi.jpg'
+
     # by default VideoCapture returns float instead of int
     # width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
     # height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -346,87 +525,172 @@ def detect_realtime(Yolo, output_path, input_size=416, show=False, CLASSES=TRAIN
     # out = cv2.VideoWriter(output_path, codec, fps, (width, height)) # output_path must be .mp4
 
     while True:
-        _, frame = vid.read()
+        # _, frame = vid.read()
 
-        # imgResp=urllib.request.urlopen(url)
-        # imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
-        # frame=cv2.imdecode(imgNp,-1)
+        imgResp=urllib.request.urlopen(url)
+        imgNp=np.array(bytearray(imgResp.read()),dtype=np.uint8)
+        frame=cv2.imdecode(imgNp,-1)
+
+        imgResp2=urllib.request.urlopen(url2)
+        imgNp2=np.array(bytearray(imgResp2.read()),dtype=np.uint8)
+        frame2=cv2.imdecode(imgNp2,-1)
+
+        imgResp3=urllib.request.urlopen(url3)
+        imgNp3=np.array(bytearray(imgResp3.read()),dtype=np.uint8)
+        frame3=cv2.imdecode(imgNp3,-1)
+
+        imgResp4=urllib.request.urlopen(url4)
+        imgNp4=np.array(bytearray(imgResp4.read()),dtype=np.uint8)
+        frame4=cv2.imdecode(imgNp4,-1)
         try:
             original_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             original_frame = cv2.cvtColor(original_frame, cv2.COLOR_BGR2RGB)
+
+            original_frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
+            original_frame2 = cv2.cvtColor(original_frame2, cv2.COLOR_BGR2RGB)
+            
+            original_frame3 = cv2.cvtColor(frame3, cv2.COLOR_BGR2RGB)
+            original_frame3 = cv2.cvtColor(original_frame3, cv2.COLOR_BGR2RGB)
+            
+            original_frame4 = cv2.cvtColor(frame4, cv2.COLOR_BGR2RGB)
+            original_frame4 = cv2.cvtColor(original_frame4, cv2.COLOR_BGR2RGB)
+            
         except:
             break
         #resize the input image and fill the empty spot with black color
         image_data = image_preprocess(np.copy(original_frame), [input_size, input_size])
+        image_data2 = image_preprocess(np.copy(original_frame2), [input_size, input_size])
+        image_data3 = image_preprocess(np.copy(original_frame3), [input_size, input_size])
+        image_data4 = image_preprocess(np.copy(original_frame4), [input_size, input_size])
         # we need convert image dimension (width,height,channel) -> (1,width,height,channel) / [width,height,channel]
+
         image_data = image_data[np.newaxis, ...].astype(np.float32)
+        image_data2 = image_data2[np.newaxis, ...].astype(np.float32)
+        image_data3 = image_data3[np.newaxis, ...].astype(np.float32)
+        image_data4 = image_data4[np.newaxis, ...].astype(np.float32)
 
         t1 = time.time()
         if YOLO_FRAMEWORK == "tf":
             pred_bbox = Yolo.predict(image_data)
-        # elif YOLO_FRAMEWORK == "trt":
-        #     batched_input = tf.constant(image_data)
-        #     result = Yolo(batched_input)
-        #     pred_bbox = []
-        #     for key, value in result.items():
-        #         value = value.numpy()
-        #         pred_bbox.append(value)
-        
+            pred_bbox2 = Yolo.predict(image_data2)
+            pred_bbox3 = Yolo.predict(image_data3)
+            pred_bbox4 = Yolo.predict(image_data4)
         t2 = time.time()
         
+        # t3 = time.time()
+        # if YOLO_FRAMEWORK == "tf":
+        #     t4 = time.time()
+
+        # t5 = time.time()
+        # if YOLO_FRAMEWORK == "tf":
+        #     t6 = time.time()
+
+        # t7 = time.time()
+        # if YOLO_FRAMEWORK == "tf":
+        #     t8 = time.time()
+
         pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
         pred_bbox = tf.concat(pred_bbox, axis=0)
 
+        pred_bbox2 = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox2]
+        pred_bbox2 = tf.concat(pred_bbox2, axis=0)
+
+        pred_bbox3 = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox3]
+        pred_bbox3 = tf.concat(pred_bbox3, axis=0)
+
+        pred_bbox4 = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox4]
+        pred_bbox4 = tf.concat(pred_bbox4, axis=0)
+
         bboxes = postprocess_boxes(pred_bbox, original_frame, input_size, score_threshold)
         bboxes = nms(bboxes, iou_threshold, method='nms')
+
+        bboxes2 = postprocess_boxes(pred_bbox2, original_frame2, input_size, score_threshold)
+        bboxes2 = nms(bboxes2, iou_threshold, method='nms')
+        
+        bboxes3 = postprocess_boxes(pred_bbox3, original_frame3, input_size, score_threshold)
+        bboxes3 = nms(bboxes3, iou_threshold, method='nms')
+        
+        bboxes4 = postprocess_boxes(pred_bbox4, original_frame4, input_size, score_threshold)
+        bboxes4 = nms(bboxes4, iou_threshold, method='nms')
         
         #count object based on predict class
         # number based on index in class textfile
-        car = [o for o in bboxes if o[-1]==0]
-        print(len(car))
-        
+        car_south= len([o for o in bboxes if o[-1]==0])
+        car_west= len([o for o in bboxes2 if o[-1]==0])
+        car_east= len([o for o in bboxes3 if o[-1]==0])
+        car_north= len([o for o in bboxes4 if o[-1]==0])
+        print(f"South:{car_south} Car(s)")
+        print(f"West:{car_west} Car(s)")
+        print(f"East:{car_east} Car(s)")
+        print(f"North:{car_north} Car(s)")
+        dct_car={
+        'south':car_south,
+        'west':car_west,
+        'east':car_east,
+        'north':car_north
+        }
+        # result = firebase.patch('/Duration/ruas-barat/', {"duration": randint(0, 20)})
+        result = fb.patch('/Vehicle/road/', dct_car)
+
         times.append(t2-t1)
         times = times[-20:]
-        
         ms = sum(times)/len(times)*1000
         fps = 1000 / ms
-        
+
+        # times2.append(t4-t3)
+        # times2 = times2[-20:]
+        # ms2 = sum(times2)/len(times2)*1000
+        # fps2 = 1000 / ms2
+
+        # times3.append(t6-t5)
+        # times3 = times3[-20:]
+        # ms3 = sum(times3)/len(times3)*1000
+        # fps3 = 1000/ms3
+
+        # times4.append(t8-t7)
+        # times4 = times4[-20:]
+        # ms4 = sum(times4)/len(times4)*1000
+        # fps4 = 1000/ms4
+
         print("Time: {:.2f}ms, {:.1f} FPS".format(ms, fps))
 
         frame = draw_bbox(original_frame, bboxes, CLASSES=CLASSES, rectangle_colors=rectangle_colors)
+        frame2 = draw_bbox(original_frame2, bboxes2, CLASSES=CLASSES, rectangle_colors=rectangle_colors)
+        frame3 = draw_bbox(original_frame3, bboxes3, CLASSES=CLASSES, rectangle_colors=rectangle_colors)
+        frame4 = draw_bbox(original_frame4, bboxes4, CLASSES=CLASSES, rectangle_colors=rectangle_colors)
         
         # CreateXMLfile("XML_Detections", str(int(time.time())), original_frame, bboxes, read_class_names(CLASSES))
         image = cv2.putText(frame, "Time: {:.1f}FPS".format(fps), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
+        image2 = cv2.putText(frame2, "Time: {:.1f}FPS".format(fps), (0, 30),
+                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+
+        image3 = cv2.putText(frame3, "Time: {:.1f}FPS".format(fps), (0, 30),
+                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+        image4 = cv2.putText(frame4, "Time: {:.1f}FPS".format(fps), (0, 30),
+
+                          cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         if output_path != '': out.write(frame)
         if show:
-            cv2.imshow('output', frame)
+            frame = cv2.resize(frame, (549, 370))
+            cv2.resizeWindow('South', 768, 370)
+            cv2.moveWindow('South', 0, 0)
+            cv2.imshow('South', frame)
+            frame2 = cv2.resize(frame2, (549, 370))
+            cv2.resizeWindow('West', 768, 370)
+            cv2.moveWindow('West', 769, 0)
+            cv2.imshow('West', frame2)
+            frame3 = cv2.resize(frame3, (549, 370))
+            cv2.resizeWindow('East', 768, 370)
+            cv2.moveWindow('East', 0, 413)
+            cv2.imshow('East', frame3)
+            frame4 = cv2.resize(frame4, (549, 370))
+            cv2.resizeWindow('North', 768, 370)
+            cv2.moveWindow('North', 769, 413)
+            cv2.imshow('North', frame4)
             if cv2.waitKey(25) & 0xFF == ord("q"):
                 cv2.destroyAllWindows()
                 break
 
     cv2.destroyAllWindows()
-
-def Load_Yolo_model():
-    #Supoort for GPU
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    if len(gpus) > 0:
-        print(f'GPUs {gpus}')
-        try: tf.config.experimental.set_memory_growth(gpus[0], True)
-        except RuntimeError: pass
-        
-    if YOLO_FRAMEWORK == "tf": # TensorFlow detection
-        if YOLO_TYPE == "yolov3":
-            Darknet_weights = YOLO_V3_TINY_WEIGHTS if TRAIN_YOLO_TINY else YOLO_V3_WEIGHTS
-            
-        if YOLO_CUSTOM_WEIGHTS == False:
-            print("Loading Darknet_weights from:", Darknet_weights)
-            yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=YOLO_COCO_CLASSES)
-            load_yolo_weights(yolo, Darknet_weights) # use Darknet weights
-        else:
-            print("Loading custom weights from:", YOLO_CUSTOM_WEIGHTS)
-            #ini model
-            yolo = Create_Yolo(input_size=YOLO_INPUT_SIZE, CLASSES=TRAIN_CLASSES)
-            yolo.load_weights(f"./{TRAIN_CHECKPOINTS_FOLDER}/{TRAIN_MODEL_NAME}") # use custom weights
-    return yolo
