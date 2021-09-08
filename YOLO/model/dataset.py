@@ -105,7 +105,7 @@ class Dataset(object):
             #ambil gambar kedua
             #implement fungsi mix up
             # 
-            def mixup(image1, bboxes1, image2, bboxes2, ratio=MIX_UP_THRESHOLD):
+            def mixup(image1, bboxes1, image2, bboxes2, alpha=MIX_UP_THRESHOLD):
                 '''
                     Mixup 2 image
                     
